@@ -277,7 +277,7 @@
             const storeName = storeNameInput.value;
             const city = cityInput.value;
             const neighborhood = neighborhoodInput.value;
-            const phone = phoneInput.value; // Corregida la variable
+            const phone = phoneInput.value;
             
             try {
                 // Paso 1: Crear el usuario con correo y contraseña
@@ -296,8 +296,9 @@
                 });
 
                 console.log("Usuario registrado y datos de perfil guardados con éxito.");
-                // Limpiar el formulario
+                // Limpiar el formulario y mostrar la app principal
                 registerForm.reset();
+                toggleViews(true);
             } catch (error) {
                 console.error("Error al registrarse:", error);
                 // Aquí podrías mostrar un mensaje de error en la interfaz
@@ -561,6 +562,57 @@
                 clientHistoryDiv.appendChild(txItem);
             });
         };
+        
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                emailInput.value = '';
+                passwordInput.value = '';
+            } catch (error) {
+                console.error("Error al iniciar sesión:", error);
+                // Aquí podrías mostrar un mensaje de error en la interfaz
+            }
+        });
+        
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = registerEmailInput.value;
+            const password = registerPasswordInput.value;
+            const ownerName = ownerNameInput.value;
+            const storeName = storeNameInput.value;
+            const city = cityInput.value;
+            const neighborhood = neighborhoodInput.value;
+            const phone = phoneInput.value;
+            
+            try {
+                // Paso 1: Crear el usuario con correo y contraseña
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Paso 2: Guardar la información adicional en Firestore
+                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/info`);
+                await setDoc(userProfileRef, {
+                    name: ownerName,
+                    storeName: storeName,
+                    city: city,
+                    neighborhood: neighborhood,
+                    phone: phone,
+                    createdAt: new Date()
+                });
+
+                console.log("Usuario registrado y datos de perfil guardados con éxito.");
+                // Limpiar el formulario y mostrar la app principal
+                registerForm.reset();
+                toggleViews(true);
+            } catch (error) {
+                console.error("Error al registrarse:", error);
+                // Aquí podrías mostrar un mensaje de error en la interfaz
+            }
+        });
 
         authenticate();
     </script>
