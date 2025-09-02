@@ -222,7 +222,6 @@
                 mainApp.classList.add('hidden');
             }
         };
-
         const authenticate = async () => {
              if (initialAuthToken) {
                 await signInWithCustomToken(auth, initialAuthToken);
@@ -230,7 +229,7 @@
                 await signInAnonymously(auth);
             }
         };
-        
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userId = user.uid;
@@ -244,7 +243,7 @@
                 toggleViews(false);
             }
         });
-        
+
         showRegisterBtn.addEventListener('click', () => {
             loginFormContainer.classList.add('hidden');
             registerFormContainer.classList.remove('hidden');
@@ -278,7 +277,7 @@
             const storeName = storeNameInput.value;
             const city = cityInput.value;
             const neighborhood = neighborhoodInput.value;
-            const phoneInput = phoneInput.value;
+            const phone = phoneInput.value; // Corregida la variable
             
             try {
                 // Paso 1: Crear el usuario con correo y contraseña
