@@ -1,31 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ELFIADITO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
   </style>
 </head>
 <body class="bg-white min-h-screen flex items-center justify-center p-4">
-
   <!-- Contenedor principal -->
-  <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+  <div id="app" class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl">
     <h1 class="text-3xl font-extrabold text-red-600 mb-4 text-center">ELFIADITO</h1>
-    <p class="text-gray-600 text-center mb-6">Administra tus fiaditos fácil y rápido</p>
+    <p class="text-gray-600 text-center mb-6">Registra y gestiona el fiadito fácilmente</p>
 
-    <!-- Pantalla Auth -->
-    <div id="auth-view">
-      <input id="email" type="email" placeholder="Correo" class="w-full p-2 mb-2 border rounded">
-      <input id="password" type="password" placeholder="Contraseña" class="w-full p-2 mb-2 border rounded">
-      <button id="login-btn" class="w-full bg-red-600 text-white py-2 rounded mb-2">Ingresar</button>
-      <button id="register-btn" class="w-full bg-gray-200 py-2 rounded">Registrarse</button>
-    </div>
+    <!-- Pantallas -->
+    <div id="auth-view"> ... aquí va tu login/registro ... </div>
+    <div id="main-app" class="hidden"> ... aquí va tu lógica de clientes ... </div>
+  </div>
 
-    <!-- Pantalla App -->
-    <div id="main-app" class="hidden">
-      <div class="flex justify-between mb-4">
-        <h2 class="text-xl font-bold text-gray-800">Clientes</h2>
-        <button id="logout-btn" class="
+  <!-- Scripts -->
+  <script type="module">
+    // Importa Firebase desde CDN oficial
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
+      authDomain: "elfiadito-f00b9.firebaseapp.com",
+      projectId: "elfiadito-f00b9",
+      storageBucket: "elfiadito-f00b9.appspot.com",
+      messagingSenderId: "595543495661",
+      appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
+      measurementId: "G-RD8QV631S5"
+    };
+
+    // Inicializar
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Ejemplo: detectar login
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("auth-view").classList.add("hidden");
+        document.getElementById("main-app").classList.remove("hidden");
+      } else {
+        document.getElementById("auth-view").classList.remove("hidden");
+        document.getElementById("main-app").classList.add("hidden");
+      }
+    });
+
+    // Aquí agregas tu lógica de login, registro, clientes, etc.
+  </script>
+</body>
+</html>
