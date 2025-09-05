@@ -1,631 +1,181 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELFIADITO</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-        }
-    </style>
-</head>
-<body class="bg-white min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-2xl transition-all duration-300 ease-in-out transform hover:scale-105">
-        <div class="flex flex-col items-center mb-8">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-600 mb-2" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22 10.999V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9.25a6.5 6.5 0 1 1 8.75-8.75zM4 5h16v3H4zm6 12a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm12 6.5a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0z"/>
-            </svg>
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-2 text-center">ELFIADITO</h1>
-            <p class="text-gray-500 text-sm md:text-base text-center">Registra y Gestiona el fiadito fácilmente.</p>
-        </div>
-
-        <!-- Pantalla de Login -->
-        <div id="auth-view" class="bg-white p-8 rounded-xl shadow-2xl text-center border-4 border-red-600 hidden">
-            <!-- Formulario de Login -->
-            <div id="login-form-container">
-                <h2 class="text-2xl font-bold text-red-600 mb-4">Inicia Sesión</h2>
-                <form id="login-form" class="flex flex-col gap-4">
-                    <input type="email" id="email-input" placeholder="Correo electrónico" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="password" id="password-input" placeholder="Contraseña" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <button type="submit" id="login-btn" class="bg-red-600 text-white font-bold p-3 rounded-lg hover:bg-red-700 transition-colors duration-300 shadow-md">Iniciar Sesión</button>
-                </form>
-                <button id="show-register-btn" class="mt-4 text-sm text-red-600 hover:text-red-700">¿No tienes cuenta? Regístrate</button>
-            </div>
-            
-            <!-- Formulario de Registro -->
-            <div id="register-form-container" class="hidden">
-                <h2 class="text-2xl font-bold text-red-600 mb-4">Regístrate</h2>
-                <form id="register-form" class="flex flex-col gap-4">
-                    <input type="text" id="owner-name-input" placeholder="Tu nombre" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="text" id="store-name-input" placeholder="Nombre de la tienda" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="text" id="city-input" placeholder="Ciudad" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="text" id="neighborhood-input" placeholder="Barrio" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="tel" id="phone-input" placeholder="Número de teléfono" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="email" id="register-email-input" placeholder="Correo electrónico" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <input type="password" id="register-password-input" placeholder="Contraseña" required class="p-3 rounded-lg border-2 border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white text-gray-800 placeholder-gray-500">
-                    <button type="submit" id="register-user-btn" class="bg-red-600 text-white font-bold p-3 rounded-lg hover:bg-red-700 transition-colors duration-300 shadow-md">Regístrate</button>
-                </form>
-                <button id="show-login-btn" class="mt-4 text-sm text-red-600 hover:text-red-700">¿Ya tienes cuenta? Inicia Sesión</button>
-            </div>
-        </div>
-
-        <!-- Contenido principal de la aplicación -->
-        <div id="main-app" class="hidden">
-            <!-- Selector de modo -->
-            <div class="flex justify-center mb-6">
-                <button id="owner-mode-btn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-l-lg transition-colors duration-300 transform active:scale-95 shadow-md">Modo Propietario</button>
-                <button id="client-mode-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-r-lg transition-colors duration-300 transform active:scale-95 shadow-md">Modo Cliente</button>
-            </div>
-
-            <!-- Vista del Propietario -->
-            <div id="owner-view">
-                <!-- Sección de Resumen Global -->
-                <div class="bg-gray-100 p-6 rounded-lg mb-6 text-center shadow-inner">
-                    <h2 class="text-xl font-bold text-gray-700">Deuda Total de Clientes</h2>
-                    <p id="total-debt" class="text-4xl font-extrabold text-red-600 mt-2">$0.00</p>
-                </div>
-
-                <!-- Formulario para Añadir Cliente -->
-                <form id="client-form" class="flex flex-col md:flex-row gap-4 mb-6">
-                    <input type="text" id="client-name-input" placeholder="Nombre del cliente" required class="flex-1 p-3 border border-red-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition-all duration-300 bg-white text-gray-800">
-                    <input type="number" id="initial-debt-input" placeholder="Deuda inicial ($)" required min="0" step="0.01" class="w-24 md:w-32 p-3 border border-red-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition-all duration-300 bg-white text-gray-800">
-                    <button type="submit" class="bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 transition-all duration-300 transform active:scale-95 shadow-lg">Añadir Cliente</button>
-                </form>
-                
-                <!-- Lista de Clientes -->
-                <div id="client-list" class="space-y-4">
-                    <!-- Los clientes se renderizarán aquí -->
-                </div>
-            </div>
-
-            <!-- Vista del Cliente -->
-            <div id="client-view" class="hidden">
-                <div id="client-login" class="text-center p-6 bg-gray-100 rounded-xl">
-                    <h2 class="text-xl font-bold text-gray-700 mb-4">Ingresa tu ID de Cliente</h2>
-                    <input type="text" id="client-id-input" placeholder="Ej: k99G8f..." class="w-full p-3 border border-red-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition-all duration-300 bg-white text-gray-800">
-                    <button id="login-client-btn" class="mt-4 bg-red-600 text-white p-3 rounded-lg font-bold w-full hover:bg-red-700 transition-all duration-300 transform active:scale-95 shadow-lg">Ver mi deuda</button>
-                </div>
-                
-                <div id="client-debt-card" class="hidden bg-white p-6 rounded-xl shadow-md border-l-4 border-red-600 mt-6">
-                    <h3 class="text-lg font-semibold text-gray-800">Hola, <span id="client-name"></span></h3>
-                    <p class="text-sm text-gray-500">ID del cliente: <span id="client-id"></span></p>
-                    <p class="text-2xl font-bold text-gray-700 mt-2">Deuda actual: <span id="client-debt-amount"></span></p>
-                    
-                    <div class="mt-4 flex flex-col md:flex-row gap-2">
-                        <input type="number" id="payment-input" placeholder="Monto a pagar ($)" min="0" step="0.01" class="flex-1 p-3 border border-red-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition-all duration-300 bg-white text-gray-800">
-                        <button id="pay-with-discount-btn" class="bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 transition-all duration-300 transform active:scale-95 shadow-lg">Pagar con descuento</button>
-                    </div>
-                    
-                    <div class="mt-6 border-t pt-4">
-                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Historial de Transacciones</h4>
-                        <div id="client-history" class="space-y-2">
-                            <!-- Transacciones del cliente se renderizarán aquí -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button id="logout-btn" class="mt-8 bg-gray-200 text-gray-700 p-2 rounded-lg w-full font-semibold hover:bg-gray-300 transition-colors duration-300 shadow-md">Cerrar sesión</button>
-        </div>
-
-        <footer class="mt-8 text-center text-xs text-gray-400 border-t pt-4">
-            <p id="user-id-display">Cargando usuario...</p>
-        </footer>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc, query, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        const authView = document.getElementById('auth-view');
-        const mainApp = document.getElementById('main-app');
-        const loginFormContainer = document.getElementById('login-form-container');
-        const registerFormContainer = document.getElementById('register-form-container');
-        const showRegisterBtn = document.getElementById('show-register-btn');
-        const showLoginBtn = document.getElementById('show-login-btn');
-        
-        const loginForm = document.getElementById('login-form');
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        
-        const registerForm = document.getElementById('register-form');
-        const ownerNameInput = document.getElementById('owner-name-input');
-        const storeNameInput = document.getElementById('store-name-input');
-        const cityInput = document.getElementById('city-input');
-        const neighborhoodInput = document.getElementById('neighborhood-input');
-        const phoneInput = document.getElementById('phone-input');
-        const registerEmailInput = document.getElementById('register-email-input');
-        const registerPasswordInput = document.getElementById('register-password-input');
-
-        const logoutBtn = document.getElementById('logout-btn');
-
-        const ownerModeBtn = document.getElementById('owner-mode-btn');
-        const clientModeBtn = document.getElementById('client-mode-btn');
-        const ownerView = document.getElementById('owner-view');
-        const clientView = document.getElementById('client-view');
-
-        const clientForm = document.getElementById('client-form');
-        const clientNameInput = document.getElementById('client-name-input');
-        const initialDebtInput = document.getElementById('initial-debt-input');
-        const clientList = document.getElementById('client-list');
-        const totalDebtDisplay = document.getElementById('total-debt');
-        const userIdDisplay = document.getElementById('user-id-display');
-
-        const clientIdInput = document.getElementById('client-id-input');
-        const loginClientBtn = document.getElementById('login-client-btn');
-        const clientDebtCard = document.getElementById('client-debt-card');
-        const clientNameSpan = document.getElementById('client-name');
-        const clientIdSpan = document.getElementById('client-id');
-        const clientDebtAmountSpan = document.getElementById('client-debt-amount');
-        const paymentInput = document.getElementById('payment-input');
-        const payWithDiscountBtn = document.getElementById('pay-with-discount-btn');
-        const clientHistoryDiv = document.getElementById('client-history');
-        
-        let userId = null;
-        let currentClientDebtDoc = null;
-
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP', // Using Colombian Pesos for example
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount);
-        };
-
-        const formatDate = (date) => {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(date).toLocaleDateString('es-CO', options);
-        };
-
-        const toggleViews = (loggedIn) => {
-            if (loggedIn) {
-                authView.classList.add('hidden');
-                mainApp.classList.remove('hidden');
-            } else {
-                authView.classList.remove('hidden');
-                mainApp.classList.add('hidden');
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                userIdDisplay.textContent = `ID de Usuario: ${userId}`;
-                console.log("Usuario autenticado con éxito:", userId);
-                toggleViews(true);
-                setupRealtimeListenerForOwner();
-            } else {
-                userId = null;
-                userIdDisplay.textContent = 'Inicia sesión para usar la aplicación.';
-                toggleViews(false);
-            }
-        });
-
-        showRegisterBtn.addEventListener('click', () => {
-            loginFormContainer.classList.add('hidden');
-            registerFormContainer.classList.remove('hidden');
-        });
-
-        showLoginBtn.addEventListener('click', () => {
-            registerFormContainer.classList.add('hidden');
-            loginFormContainer.classList.remove('hidden');
-        });
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch (error) {
-                console.error("Error al iniciar sesión:", error);
-                // Aquí podrías mostrar un mensaje de error en la interfaz
-            }
-        });
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = registerEmailInput.value;
-            const password = registerPasswordInput.value;
-            const ownerName = ownerNameInput.value;
-            const storeName = storeNameInput.value;
-            const city = cityInput.value;
-            const neighborhood = neighborhoodInput.value;
-            const phoneInput = phoneInput.value;
-            
-            try {
-                // Paso 1: Crear el usuario con correo y contraseña
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Paso 2: Guardar la información adicional en Firestore
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/info`);
-                await setDoc(userProfileRef, {
-                    name: ownerName,
-                    storeName: storeName,
-                    city: city,
-                    neighborhood: neighborhood,
-                    phone: phoneInput,
-                    createdAt: new Date()
-                });
-
-                console.log("Usuario registrado y datos de perfil guardados con éxito.");
-                // Limpiar el formulario y mostrar la app principal
-                registerForm.reset();
-                toggleViews(true);
-            } catch (error) {
-                console.error("Error al registrarse:", error);
-                // Aquí podrías mostrar un mensaje de error en la interfaz
-            }
-        });
-
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error("Error al cerrar sesión:", error);
-            }
-        });
-        
-        const setupRealtimeListenerForOwner = () => {
-            if (!userId) return;
-
-            // Ruta de la colección para cada usuario autenticado
-            const clientsCollectionPath = `artifacts/${appId}/users/${userId}/clientes`;
-            const clientsRef = collection(db, clientsCollectionPath);
-
-            onSnapshot(clientsRef, (snapshot) => {
-                const clients = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                renderClientsForOwner(clients);
-            }, (error) => {
-                console.error("Error al obtener los clientes:", error);
-            });
-        };
-
-        const renderClientsForOwner = (clients) => {
-            clientList.innerHTML = '';
-            let totalDebt = 0;
-            clients.forEach(client => {
-                totalDebt += client.debt;
-                const clientCard = document.createElement('div');
-                clientCard.dataset.id = client.id;
-                clientCard.className = 'bg-gray-100 p-4 rounded-xl shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center border-l-4 border-red-600 transition-all duration-300 hover:shadow-lg';
-
-                clientCard.innerHTML = `
-                    <div class="flex-1 mb-4 sm:mb-0">
-                        <h3 class="text-lg font-semibold text-gray-800">${client.name}</h3>
-                        <p class="text-sm text-gray-500">ID del cliente: ${client.id}</p>
-                        <p class="text-2xl font-bold text-red-600 mt-1">${formatCurrency(client.debt)}</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <div class="flex items-center gap-2">
-                            <button class="bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center font-bold text-xl remove-debt hover:bg-gray-400 transition-all duration-200 transform active:scale-95 shadow-sm">-</button>
-                            <input type="number" step="0.01" class="w-16 text-center border border-red-600 rounded-lg p-1 text-sm debt-input focus:outline-none focus:ring-1 focus:ring-red-400 bg-white text-gray-800">
-                            <button class="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-xl add-debt hover:bg-red-700 transition-all duration-200 transform active:scale-95 shadow-sm">+</button>
-                        </div>
-                        <button class="bg-red-500 text-white p-2 rounded-lg text-sm delete-button hover:bg-red-600 transition-all duration-200 transform active:scale-95 shadow-sm">Eliminar</button>
-                    </div>
-                `;
-                clientList.appendChild(clientCard);
-            });
-            totalDebtDisplay.textContent = formatCurrency(totalDebt);
-        };
-
-        clientForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const clientName = clientNameInput.value.trim();
-            const initialDebt = parseFloat(initialDebtInput.value);
-            if (clientName && !isNaN(initialDebt) && userId) {
-                try {
-                    const clientsCollectionPath = `artifacts/${appId}/users/${userId}/clientes`;
-                    const newClientRef = await addDoc(collection(db, clientsCollectionPath), {
-                        name: clientName,
-                        debt: initialDebt,
-                        createdAt: new Date()
-                    });
-
-                    // Add initial transaction for historical record
-                    if (initialDebt > 0) {
-                        await addDoc(collection(newClientRef, 'transactions'), {
-                            amount: initialDebt,
-                            description: 'Cargo inicial',
-                            type: 'charge',
-                            timestamp: new Date()
-                        });
-                    }
-
-                    clientNameInput.value = '';
-                    initialDebtInput.value = '';
-                } catch (error) {
-                    console.error("Error al añadir el cliente:", error);
-                }
-            }
-        });
-
-        clientList.addEventListener('click', async (e) => {
-            const clientCard = e.target.closest('[data-id]');
-            if (!clientCard || !userId) return;
-
-            const clientId = clientCard.dataset.id;
-            const clientsCollectionPath = `artifacts/${appId}/users/${userId}/clientes`;
-            const clientRef = doc(db, clientsCollectionPath, clientId);
-
-            if (e.target.classList.contains('delete-button')) {
-                try {
-                    await deleteDoc(clientRef);
-                } catch (error) {
-                    console.error("Error al eliminar el cliente:", error);
-                }
-            } else {
-                const debtInput = clientCard.querySelector('.debt-input');
-                const amount = parseFloat(debtInput.value);
-
-                if (e.target.classList.contains('add-debt') && !isNaN(amount) && amount > 0) {
-                    const docSnap = await getDoc(clientRef);
-                    const currentDebt = docSnap.data().debt;
-                    const newDebt = currentDebt + amount;
-
-                    await updateDoc(clientRef, { debt: newDebt });
-                    await addDoc(collection(clientRef, 'transactions'), {
-                        amount: amount,
-                        description: 'Cargo por compra',
-                        type: 'charge',
-                        timestamp: new Date()
-                    });
-
-                    debtInput.value = '';
-                } else if (e.target.classList.contains('remove-debt') && !isNaN(amount) && amount > 0) {
-                    const docSnap = await getDoc(clientRef);
-                    const currentDebt = docSnap.data().debt;
-                    const newDebt = Math.max(0, currentDebt - amount);
-                    
-                    await updateDoc(clientRef, { debt: newDebt });
-                    await addDoc(collection(clientRef, 'transactions'), {
-                        amount: amount,
-                        description: 'Abono en efectivo',
-                        type: 'payment',
-                        timestamp: new Date()
-                    });
-                    
-                    debtInput.value = '';
-                }
-            }
-        });
-
-        // Lógica para la vista de cliente
-        ownerModeBtn.addEventListener('click', () => {
-            ownerView.classList.remove('hidden');
-            clientView.classList.add('hidden');
-            ownerModeBtn.classList.replace('bg-gray-200', 'bg-red-600');
-            ownerModeBtn.classList.replace('text-gray-700', 'text-white');
-            clientModeBtn.classList.replace('bg-red-600', 'bg-gray-200');
-            clientModeBtn.classList.replace('text-white', 'text-gray-700');
-            setupRealtimeListenerForOwner();
-        });
-
-        clientModeBtn.addEventListener('click', () => {
-            ownerView.classList.add('hidden');
-            clientView.classList.remove('hidden');
-            clientModeBtn.classList.replace('bg-gray-200', 'bg-red-600');
-            clientModeBtn.classList.replace('text-gray-700', 'text-white');
-            ownerModeBtn.classList.replace('bg-red-600', 'bg-gray-200');
-            ownerModeBtn.classList.replace('text-white', 'text-gray-700');
-        });
-        
-        loginClientBtn.addEventListener('click', async () => {
-            const clientId = clientIdInput.value.trim();
-            if (!clientId) {
-                console.error("El ID del cliente no puede estar vacío.");
-                return;
-            }
-            
-            // Usamos el userId del dueño de la tienda que está logueado
-            if (!userId) {
-                console.error("Error: El dueño de la tienda no está autenticado. Por favor, inicie sesión primero.");
-                return;
-            }
-
-            const clientRef = doc(db, `artifacts/${appId}/users/${userId}/clientes`, clientId);
-            try {
-                const docSnap = await getDoc(clientRef);
-                if (docSnap.exists()) {
-                    currentClientDebtDoc = docSnap;
-                    clientNameSpan.textContent = docSnap.data().name;
-                    clientIdSpan.textContent = docSnap.id;
-                    
-                    // Escuchar en tiempo real la deuda y las transacciones del cliente
-                    onSnapshot(clientRef, (docSnap) => {
-                        if (docSnap.exists()) {
-                            clientDebtAmountSpan.textContent = formatCurrency(docSnap.data().debt);
-                        }
-                    });
-
-                    onSnapshot(collection(clientRef, 'transactions'), (snapshot) => {
-                        const transactions = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        })).sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
-                        renderClientHistory(transactions);
-                    });
-                    
-                    clientDebtCard.classList.remove('hidden');
-                    document.getElementById('client-login').classList.add('hidden');
-                } else {
-                    console.log("No se encontró ningún cliente con ese ID.");
-                    // Aquí podrías mostrar un mensaje de error en la interfaz
-                }
-            } catch (error) {
-                console.error("Error al buscar cliente:", error);
-            }
-        });
-
-        payWithDiscountBtn.addEventListener('click', async () => {
-            const amount = parseFloat(paymentInput.value);
-            if (isNaN(amount) || amount <= 0 || !currentClientDebtDoc) {
-                console.log("Monto inválido o cliente no seleccionado.");
-                return;
-            }
-            
-            const currentDebt = currentClientDebtDoc.data().debt;
-            const discount = amount * 0.10; // 10% de descuento
-            const amountPaid = amount - discount;
-            const newDebt = Math.max(0, currentDebt - amountPaid);
-            const formattedDiscount = formatCurrency(discount);
-
-            const clientRef = doc(db, `artifacts/${appId}/users/${userId}/clientes`, currentClientDebtDoc.id);
-            try {
-                await updateDoc(clientRef, { debt: newDebt });
-                await addDoc(collection(clientRef, 'transactions'), {
-                    amount: amountPaid,
-                    description: `Pago con descuento de ${formattedDiscount}`,
-                    type: 'payment',
-                    timestamp: new Date()
-                });
-                console.log(`Pago de ${formatCurrency(amountPaid)} aplicado. Descuento de ${formattedDiscount}. Nueva deuda: ${formatCurrency(newDebt)}.`);
-                paymentInput.value = '';
-            } catch (error) {
-                console.error("Error al aplicar el pago:", error);
-            }
-        });
-
-        const renderClientHistory = (transactions) => {
-            clientHistoryDiv.innerHTML = '';
-            if (transactions.length === 0) {
-                clientHistoryDiv.innerHTML = '<p class="text-gray-500 text-sm italic">No hay transacciones registradas.</p>';
-                return;
-            }
-
-            transactions.forEach(tx => {
-                const txItem = document.createElement('div');
-                const isPayment = tx.type === 'payment';
-                const color = isPayment ? 'text-green-600' : 'text-red-600';
-                const sign = isPayment ? '-' : '+';
-                const bgColor = isPayment ? 'bg-green-100' : 'bg-red-100';
-                
-                txItem.className = `transaction-item ${bgColor}`;
-                txItem.innerHTML = `
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-800">${tx.description}</p>
-                        <p class="text-xs text-gray-500">${formatDate(tx.timestamp.toDate())}</p>
-                    </div>
-                    <span class="font-bold text-lg ${color}">${sign}${formatCurrency(tx.amount)}</span>
-                `;
-                clientHistoryDiv.appendChild(txItem);
-            });
-        };
-        
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch (error) {
-                console.error("Error al iniciar sesión:", error);
-                // Aquí podrías mostrar un mensaje de error en la interfaz
-            }
-        });
-        
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = registerEmailInput.value;
-            const password = registerPasswordInput.value;
-            const ownerName = ownerNameInput.value;
-            const storeName = storeNameInput.value;
-            const city = cityInput.value;
-            const neighborhood = neighborhoodInput.value;
-            const phoneInput = phoneInput.value;
-            
-            try {
-                // Paso 1: Crear el usuario con correo y contraseña
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Paso 2: Guardar la información adicional en Firestore
-                const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/info`);
-                await setDoc(userProfileRef, {
-                    name: ownerName,
-                    storeName: storeName,
-                    city: city,
-                    neighborhood: neighborhood,
-                    phone: phoneInput,
-                    createdAt: new Date()
-                });
-
-                console.log("Usuario registrado y datos de perfil guardados con éxito.");
-                // Limpiar el formulario y mostrar la app principal
-                registerForm.reset();
-                toggleViews(true);
-            } catch (error) {
-                console.error("Error al registrarse:", error);
-                // Aquí podrías mostrar un mensaje de error en la interfaz
-            }
-        });
-        
-        // Se llama a la autenticación anónima una vez al cargar la página.
-        if (initialAuthToken) {
-            signInWithCustomToken(auth, initialAuthToken).catch(error => console.error(error));
-        } else {
-            signInAnonymously(auth).catch(error => console.error(error));
-        }
-    </script>
-</body>
-    <!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-  // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-     apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-    authDomain: "elfiadito-f00b9.firebaseapp.com",
-    projectId: "elfiadito-f00b9",
-    storageBucket: "elfiadito-f00b9.firebasestorage.app",
-    messagingSenderId: "595543495661",
-    appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
-    measurementId: "G-RD8QV631S5"
-    };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-  // Ejemplo: registrar tendero
-  async function registrarTendero(email, password) {
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("Tendero registrado:", cred.user.uid);
-    } catch (error) {
-      console.error("Error registrando tendero:", error.message);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EL FIADITO</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      color: #222;
+      margin: 0;
+      padding: 0;
     }
-  }
-</script>
+    header {
+      background-color: #b71c1c;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      padding: 1rem;
+    }
+    .hidden { display: none; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #f9f9f9;
+    }
+    input, button {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #b71c1c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #a31515;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EL FIADITO</h1>
+    <p>Administra los fiados de tu tienda con transparencia y rapidez</p>
+  </header>
 
+  <main>
+    <!-- Registro de tendero -->
+    <section id="tendero-register" class="card">
+      <h2>Registrar Tendero</h2>
+      <input type="email" id="tenderoEmail" placeholder="Correo del tendero" />
+      <input type="password" id="tenderoPassword" placeholder="Contraseña" />
+      <button id="btnRegisterTendero">Registrar Tendero</button>
+    </section>
+
+    <!-- Login de tendero -->
+    <section id="tendero-login" class="card">
+      <h2>Login Tendero</h2>
+      <input type="email" id="loginEmail" placeholder="Correo del tendero" />
+      <input type="password" id="loginPassword" placeholder="Contraseña" />
+      <button id="btnLoginTendero">Entrar</button>
+    </section>
+
+    <!-- Panel de tendero -->
+    <section id="panel-tendero" class="card hidden">
+      <h2>Panel del Tendero</h2>
+      <input type="text" id="clienteId" placeholder="ID del cliente" />
+      <input type="number" id="clienteDeuda" placeholder="Monto de la deuda" />
+      <button id="btnRegistrarDeuda">Registrar Deuda</button>
+      <button id="btnCerrarSesion">Cerrar Sesión</button>
+    </section>
+
+    <!-- Consulta de cliente -->
+    <section id="cliente-consulta" class="card">
+      <h2>Consulta de Cliente</h2>
+      <input type="text" id="consultaClienteId" placeholder="ID del cliente" />
+      <button id="btnConsultarDeuda">Ver Deuda</button>
+      <p id="resultadoConsulta"></p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+   
+  const firebaseConfig = {
+  apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
+  authDomain: "elfiadito-f00b9.firebaseapp.com",
+  projectId: "elfiadito-f00b9",
+  storageBucket: "elfiadito-f00b9.firebasestorage.app",
+  messagingSenderId: "595543495661",
+  appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
+  measurementId: "G-RD8QV631S5"
+  };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = firebaseConfig.appId;
+
+    // Registrar tendero
+    document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
+      const email = document.getElementById("tenderoEmail").value;
+      const password = document.getElementById("tenderoPassword").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Tendero registrado correctamente");
+      } catch (error) {
+        alert("Error registrando tendero: " + error.message);
+      }
+    });
+
+    // Login tendero
+    document.getElementById("btnLoginTendero").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById("tendero-login").classList.add("hidden");
+        document.getElementById("tendero-register").classList.add("hidden");
+        document.getElementById("panel-tendero").classList.remove("hidden");
+      } catch (error) {
+        alert("Error en login: " + error.message);
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById("btnCerrarSesion").addEventListener("click", async () => {
+      await signOut(auth);
+      document.getElementById("panel-tendero").classList.add("hidden");
+      document.getElementById("tendero-login").classList.remove("hidden");
+      document.getElementById("tendero-register").classList.remove("hidden");
+    });
+
+    // Registrar deuda
+    document.getElementById("btnRegistrarDeuda").addEventListener("click", async () => {
+      const clienteId = document.getElementById("clienteId").value;
+      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+      if (!clienteId || isNaN(deuda)) {
+        alert("Ingresa un cliente ID y un monto válido");
+        return;
+      }
+      try {
+        await setDoc(doc(db, "clientes", clienteId), { deuda: deuda });
+        alert("Deuda registrada para cliente " + clienteId);
+      } catch (error) {
+        alert("Error registrando deuda: " + error.message);
+      }
+    });
+
+    // Consultar deuda del cliente
+    document.getElementById("btnConsultarDeuda").addEventListener("click", async () => {
+      const clienteId = document.getElementById("consultaClienteId").value;
+      try {
+        const clienteRef = doc(db, "clientes", clienteId);
+        const clienteSnap = await getDoc(clienteRef);
+        if (clienteSnap.exists()) {
+          document.getElementById("resultadoConsulta").innerText =
+            "El cliente debe: $" + clienteSnap.data().deuda;
+        } else {
+          document.getElementById("resultadoConsulta").innerText =
+            "No se encontró registro de este cliente";
+        }
+      } catch (error) {
+        alert("Error consultando deuda: " + error.message);
+      }
+    });
+  </script>
+</body>
 </html>
