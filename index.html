@@ -132,23 +132,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc, query, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-    
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-     apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-    authDomain: "elfiadito-f00b9.firebaseapp.com",
-    projectId: "elfiadito-f00b9",
-    storageBucket: "elfiadito-f00b9.firebasestorage.app",
-    messagingSenderId: "595543495661",
-    appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
-    measurementId: "G-RD8QV631S5"
-    };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
         const authView = document.getElementById('auth-view');
         const mainApp = document.getElementById('main-app');
         const loginFormContainer = document.getElementById('login-form-container');
@@ -612,4 +595,37 @@
         }
     </script>
 </body>
+    <!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+     apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
+    authDomain: "elfiadito-f00b9.firebaseapp.com",
+    projectId: "elfiadito-f00b9",
+    storageBucket: "elfiadito-f00b9.firebasestorage.app",
+    messagingSenderId: "595543495661",
+    appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
+    measurementId: "G-RD8QV631S5"
+    };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+  // Ejemplo: registrar tendero
+  async function registrarTendero(email, password) {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("Tendero registrado:", cred.user.uid);
+    } catch (error) {
+      console.error("Error registrando tendero:", error.message);
+    }
+  }
+</script>
+
 </html>
