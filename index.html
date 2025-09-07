@@ -145,19 +145,20 @@
 
     // Registrar deuda
     document.getElementById("btnRegistrarDeuda").addEventListener("click", async () => {
-      const clienteId = document.getElementById("clienteId").value;
-      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
-      if (!clienteId || isNaN(deuda)) {
-        alert("Ingresa un cliente ID y un monto válido");
-        return;
-      }
-      try {
-        await setDoc(doc(db, "clientes", clienteId), { deuda: deuda });
-        alert("Deuda registrada para cliente " + clienteId);
-      } catch (error) {
-        alert("Error registrando deuda: " + error.message);
-      }
+    const clienteId = document.getElementById("clienteId").value;
+    const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+    if (!clienteId || isNaN(deuda)) {
+    alert("Ingresa un cliente ID y un monto válido");
+    return;
+    }
+    try {
+    await setDoc(doc(db, "clientes", clienteId), { deuda: deuda });
+    alert("Deuda registrada para cliente " + clienteId);
+    } catch (error) {
+    alert("Error registrando deuda: " + error.message);
+    }
     });
+
 
     // Consultar deuda del cliente
     document.getElementById("btnConsultarDeuda").addEventListener("click", async () => {
