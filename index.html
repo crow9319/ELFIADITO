@@ -1,232 +1,115 @@
-import { useState, useEffect } from "react";
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  onSnapshot,
-  updateDoc,
-  doc,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>App del Tendero</title>
+  <script type="module">
+    // ================== Configuración Firebase ==================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, query, where, getDocs 
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-  authDomain: "elfiadito-f00b9.firebaseapp.com",
-  projectId: "elfiadito-f00b9",
-  storageBucket: "elfiadito-f00b9.firebasestorage.app",
-  messagingSenderId: "595543495661",
-  appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
-  measurementId: "G-RD8QV631S5"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
+      authDomain: "elfiadito-f0b09.firebaseapp.com",
+      projectId: "elfiadito-f0b09",
+      storageBucket: "elfiadito-f0b09.appspot.com",
+      messagingSenderId: "595543495661",
+      appId: "1:595543495661:web:808e79caa9ea6968de4",
+      measurementId: "G-RD8QV6315S"
+    };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-// =============================
-// Componente Tendero
-// =============================
-function PanelTendero() {
-  const [clientes, setClientes] = useState([]);
-  const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", saldo: 0 });
+    // ================== Panel del Tendero ==================
+    async function registrarCliente() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const saldo = Number(document.getElementById("saldo").value) || 0;
 
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "clientes"), (snapshot) => {
-      const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setClientes(lista);
-    });
-    return () => unsub();
-  }, []);
+      if (!nombre) {
+        alert("Escribe un nombre o apodo");
+        return;
+      }
 
-  const registrarCliente = async () => {
-    if (!nuevoCliente.nombre.trim()) {
-      alert("Escribe un nombre o apodo");
-      return;
+      await addDoc(collection(db, "clientes"), { nombre, saldo });
+      document.getElementById("nombre").value = "";
+      document.getElementById("saldo").value = "";
     }
-    try {
-      await addDoc(collection(db, "clientes"), {
-        nombre: nuevoCliente.nombre,
-        saldo: Number(nuevoCliente.saldo) || 0,
+
+    function cargarClientes() {
+      const lista = document.getElementById("lista-clientes");
+      onSnapshot(collection(db, "clientes"), (snapshot) => {
+        lista.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const cliente = docSnap.data();
+          const li = document.createElement("li");
+          li.textContent = `${cliente.nombre} — Saldo: $${cliente.saldo} `;
+
+          const btnMenos = document.createElement("button");
+          btnMenos.textContent = "-1000";
+          btnMenos.onclick = () => modificarSaldo(docSnap.id, cliente.saldo - 1000);
+
+          const btnMas = document.createElement("button");
+          btnMas.textContent = "+1000";
+          btnMas.onclick = () => modificarSaldo(docSnap.id, cliente.saldo + 1000);
+
+          li.appendChild(btnMenos);
+          li.appendChild(btnMas);
+          lista.appendChild(li);
+        });
       });
-      setNuevoCliente({ nombre: "", saldo: 0 });
-    } catch (error) {
-      console.error("Error registrando cliente:", error);
     }
-  };
 
-  const modificarSaldo = async (id, cantidad) => {
-    const cliente = clientes.find((c) => c.id === id);
-    if (!cliente) return;
-    const nuevoSaldo = cliente.saldo + cantidad;
-    await updateDoc(doc(db, "clientes", id), { saldo: nuevoSaldo });
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-2xl p-6">
-      <h2 className="text-2xl font-bold mb-4 text-blue-600">
-        Panel del Tendero
-      </h2>
-
-      {/* Registro de cliente */}
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          placeholder="Nombre o apodo"
-          value={nuevoCliente.nombre}
-          onChange={(e) =>
-            setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })
-          }
-          className="border rounded-lg p-2 flex-1"
-        />
-        <input
-          type="number"
-          placeholder="Saldo inicial"
-          value={nuevoCliente.saldo}
-          onChange={(e) =>
-            setNuevoCliente({ ...nuevoCliente, saldo: e.target.value })
-          }
-          className="border rounded-lg p-2 w-32"
-        />
-        <button
-          onClick={registrarCliente}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          Registrar
-        </button>
-      </div>
-
-      {/* Lista de clientes */}
-      <ul className="space-y-3">
-        {clientes.map((cliente) => (
-          <li
-            key={cliente.id}
-            className="flex justify-between items-center bg-gray-100 p-3 rounded-lg"
-          >
-            <div>
-              <p className="font-semibold">{cliente.nombre}</p>
-              <p className="text-gray-700">Saldo: ${cliente.saldo}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => modificarSaldo(cliente.id, -1000)}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
-              >
-                -1000
-              </button>
-              <button
-                onClick={() => modificarSaldo(cliente.id, 1000)}
-                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg"
-              >
-                +1000
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-// =============================
-// Componente Cliente
-// =============================
-function PanelCliente() {
-  const [apodo, setApodo] = useState("");
-  const [saldo, setSaldo] = useState(null);
-  const [error, setError] = useState("");
-
-  const buscarCliente = async () => {
-    if (!apodo.trim()) {
-      setError("Escribe tu apodo");
-      return;
+    async function modificarSaldo(id, nuevoSaldo) {
+      const ref = doc(db, "clientes", id);
+      await updateDoc(ref, { saldo: nuevoSaldo });
     }
-    try {
+
+    // ================== Panel del Cliente ==================
+    async function buscarCliente() {
+      const apodo = document.getElementById("apodo").value.trim();
+      const salida = document.getElementById("resultado");
+      if (!apodo) {
+        salida.textContent = "Escribe tu apodo.";
+        return;
+      }
+
       const q = query(collection(db, "clientes"), where("nombre", "==", apodo));
       const snapshot = await getDocs(q);
+
       if (snapshot.empty) {
-        setError("Cliente no encontrado");
-        setSaldo(null);
-      } else {
-        const data = snapshot.docs[0].data();
-        setSaldo(data.saldo);
-        setError("");
+        salida.textContent = "Cliente no encontrado.";
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setError("Error al buscar cliente");
+
+      const data = snapshot.docs[0].data();
+      salida.textContent = `${data.nombre}, tu saldo es: $${data.saldo}`;
     }
-  };
 
-  return (
-    <div className="max-w-md mx-auto bg-white shadow-lg rounded-2xl p-6 text-center">
-      <h2 className="text-2xl font-bold mb-4 text-green-600">
-        Panel del Cliente
-      </h2>
+    // ================== Inicializar ==================
+    window.onload = () => {
+      document.getElementById("registrar").addEventListener("click", registrarCliente);
+      document.getElementById("consultar").addEventListener("click", buscarCliente);
+      cargarClientes();
+    };
+  </script>
+</head>
+<body>
+  <h2>📌 Panel del Tendero</h2>
+  <input id="nombre" placeholder="Nombre o apodo">
+  <input id="saldo" type="number" placeholder="Saldo inicial">
+  <button id="registrar">Registrar</button>
 
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Escribe tu apodo"
-          value={apodo}
-          onChange={(e) => setApodo(e.target.value)}
-          className="border rounded-lg p-2 flex-1"
-        />
-        <button
-          onClick={buscarCliente}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
-        >
-          Consultar
-        </button>
-      </div>
+  <h3>Lista de clientes</h3>
+  <ul id="lista-clientes"></ul>
 
-      {error && <p className="text-red-500">{error}</p>}
-      {saldo !== null && (
-        <div className="mt-4 p-6 border rounded-lg bg-gray-50">
-          <p className="text-lg font-medium text-gray-600">Tu saldo actual es:</p>
-          <p className="text-4xl font-bold text-green-700">${saldo}</p>
-        </div>
-      )}
-    </div>
-  );
-}
+  <hr>
 
-// =============================
-// App Principal
-// =============================
-export default function App() {
-  const [vista, setVista] = useState(null);
-
-  return (
-    <div className="min-h-screen bg-gray-200 flex items-center justify-center p-6">
-      {!vista && (
-        <div className="bg-white shadow-xl rounded-2xl p-10 text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">
-            Bienvenido a la Tienda
-          </h1>
-          <div className="space-x-4">
-            <button
-              onClick={() => setVista("tendero")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
-            >
-              Entrar como Tendero
-            </button>
-            <button
-              onClick={() => setVista("cliente")}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
-            >
-              Entrar como Cliente
-            </button>
-          </div>
-        </div>
-      )}
-
-      {vista === "tendero" && <PanelTendero />}
-      {vista === "cliente" && <PanelCliente />}
-    </div>
-  );
-}
+  <h2>👤 Panel del Cliente</h2>
+  <input id="apodo" placeholder="Escribe tu apodo">
+  <button id="consultar">Consultar saldo</button>
+  <p id="resultado"></p>
+</body>
+</html>
