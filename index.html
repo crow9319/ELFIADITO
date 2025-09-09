@@ -67,11 +67,13 @@ function PanelTendero() {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Panel del Tendero</h2>
+    <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-2xl p-6">
+      <h2 className="text-2xl font-bold mb-4 text-blue-600">
+        Panel del Tendero
+      </h2>
 
       {/* Registro de cliente */}
-      <div className="mb-4">
+      <div className="flex gap-2 mb-6">
         <input
           type="text"
           placeholder="Nombre o apodo"
@@ -79,7 +81,7 @@ function PanelTendero() {
           onChange={(e) =>
             setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })
           }
-          className="border p-2 mr-2"
+          className="border rounded-lg p-2 flex-1"
         />
         <input
           type="number"
@@ -88,31 +90,37 @@ function PanelTendero() {
           onChange={(e) =>
             setNuevoCliente({ ...nuevoCliente, saldo: e.target.value })
           }
-          className="border p-2 mr-2"
+          className="border rounded-lg p-2 w-32"
         />
         <button
           onClick={registrarCliente}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
         >
           Registrar
         </button>
       </div>
 
       {/* Lista de clientes */}
-      <ul>
+      <ul className="space-y-3">
         {clientes.map((cliente) => (
-          <li key={cliente.id} className="mb-2">
-            <strong>{cliente.nombre}</strong> — Saldo: ${cliente.saldo}
-            <div className="mt-1">
+          <li
+            key={cliente.id}
+            className="flex justify-between items-center bg-gray-100 p-3 rounded-lg"
+          >
+            <div>
+              <p className="font-semibold">{cliente.nombre}</p>
+              <p className="text-gray-700">Saldo: ${cliente.saldo}</p>
+            </div>
+            <div className="flex gap-2">
               <button
                 onClick={() => modificarSaldo(cliente.id, -1000)}
-                className="bg-red-500 text-white px-2 py-1 mr-2 rounded"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
               >
                 -1000
               </button>
               <button
                 onClick={() => modificarSaldo(cliente.id, 1000)}
-                className="bg-green-500 text-white px-2 py-1 rounded"
+                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg"
               >
                 +1000
               </button>
@@ -155,30 +163,32 @@ function PanelCliente() {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Panel del Cliente</h2>
+    <div className="max-w-md mx-auto bg-white shadow-lg rounded-2xl p-6 text-center">
+      <h2 className="text-2xl font-bold mb-4 text-green-600">
+        Panel del Cliente
+      </h2>
 
-      <input
-        type="text"
-        placeholder="Escribe tu apodo"
-        value={apodo}
-        onChange={(e) => setApodo(e.target.value)}
-        className="border p-2 mr-2"
-      />
-      <button
-        onClick={buscarCliente}
-        className="bg-green-500 text-white px-4 py-2 rounded"
-      >
-        Consultar saldo
-      </button>
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          placeholder="Escribe tu apodo"
+          value={apodo}
+          onChange={(e) => setApodo(e.target.value)}
+          className="border rounded-lg p-2 flex-1"
+        />
+        <button
+          onClick={buscarCliente}
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+        >
+          Consultar
+        </button>
+      </div>
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && <p className="text-red-500">{error}</p>}
       {saldo !== null && (
-        <div className="mt-4 p-4 border rounded bg-gray-100">
-          <p>
-            <strong>{apodo}</strong>, tu saldo es:
-          </p>
-          <p className="text-2xl font-bold text-blue-600">${saldo}</p>
+        <div className="mt-4 p-6 border rounded-lg bg-gray-50">
+          <p className="text-lg font-medium text-gray-600">Tu saldo actual es:</p>
+          <p className="text-4xl font-bold text-green-700">${saldo}</p>
         </div>
       )}
     </div>
@@ -192,21 +202,26 @@ export default function App() {
   const [vista, setVista] = useState(null);
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gray-200 flex items-center justify-center p-6">
       {!vista && (
-        <div className="space-x-4">
-          <button
-            onClick={() => setVista("tendero")}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Entrar como Tendero
-          </button>
-          <button
-            onClick={() => setVista("cliente")}
-            className="bg-green-500 text-white px-4 py-2 rounded"
-          >
-            Entrar como Cliente
-          </button>
+        <div className="bg-white shadow-xl rounded-2xl p-10 text-center space-y-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-6">
+            Bienvenido a la Tienda
+          </h1>
+          <div className="space-x-4">
+            <button
+              onClick={() => setVista("tendero")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+            >
+              Entrar como Tendero
+            </button>
+            <button
+              onClick={() => setVista("cliente")}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
+            >
+              Entrar como Cliente
+            </button>
+          </div>
         </div>
       )}
 
