@@ -121,15 +121,23 @@
 
     // Registrar tendero
     document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
-      const email = document.getElementById("tenderoEmail").value;
-      const password = document.getElementById("tenderoPassword").value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Tendero registrado correctamente ✅");
-      } catch (error) {
-        alert("Error registrando tendero: " + error.message);
-      }
+    const email = document.getElementById("tenderoEmail").value;
+    const password = document.getElementById("tenderoPassword").value;
+    try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+    // 👇 Crear doc del tendero en Firestore
+    await setDoc(doc(db, "tenderos", userCred.user.uid), {
+      email: email,
+      creado: new Date(),
     });
+
+    alert("Tendero registrado correctamente ✅");
+    } catch (error) {
+    alert("Error registrando tendero: " + error.message);
+    }
+    });
+
 
     // Login tendero
     document.getElementById("btnLoginTendero").addEventListener("click", async () => {
@@ -153,31 +161,32 @@
       document.getElementById("tendero-register").classList.remove("hidden");
     });
 
-    // Registrar cliente (apodo + deuda)
-    document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
-      const apodo = document.getElementById("clienteApodo").value.trim();
-      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
-      const tendero = auth.currentUser;
+   // Registrar cliente (apodo + deuda)
+document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
+  const apodo = document.getElementById("clienteApodo").value.trim();
+  const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+  const tendero = auth.currentUser;
 
-      if (!apodo || isNaN(deuda)) {
-        alert("Completa todos los campos");
-        return;
-      }
-      if (!tendero) {
-        alert("Debes iniciar sesión como tendero");
-        return;
-      }
+  if (!apodo || isNaN(deuda)) {
+    alert("Completa todos los campos");
+    return;
+  }
+  if (!tendero) {
+    alert("Debes iniciar sesión como tendero");
+    return;
+  }
 
-      try {
-        await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), apodo.toLowerCase()), {
-          apodo: apodo,
-          deuda: deuda,
-        });
-        alert("Cliente registrado correctamente ✅");
-      } catch (error) {
-        alert("Error registrando cliente: " + error.message);
-      }
+  try {
+    await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), apodo.toLowerCase()), {
+      apodo: apodo,
+      deuda: deuda,
     });
+    alert("Cliente registrado correctamente ✅");
+  } catch (error) {
+    alert("Error registrando cliente: " + error.message);
+  }
+});
+
 
     // Consultar deuda por apodo (sin login)
     document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
