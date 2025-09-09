@@ -2,163 +2,233 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel de Deudas - YOURIA</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EL FIADITO</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background-color: #fff;
+      color: #222;
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    h1, h2 { color: #333; }
-    .login, .panel {
-      background: #fff;
-      padding: 20px;
-      margin: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    header {
+      background-color: #b71c1c;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      width: 100%;
+    }
+    main {
+      padding: 1rem;
       max-width: 400px;
-      width: 90%;
+      width: 100%;
+    }
+    .hidden { display: none; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #f9f9f9;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     input, button {
-      padding: 10px;
-      margin: 5px 0;
+      margin: 0.4rem 0;
+      padding: 0.6rem;
       width: 100%;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      box-sizing: border-box;
     }
     button {
-      background: #007bff;
+      background: #b71c1c;
       color: white;
       border: none;
       cursor: pointer;
+      border-radius: 4px;
     }
-    button:hover { background: #0056b3; }
-    .hidden { display: none; }
+    button:hover { background: #a31515; }
   </style>
 </head>
 <body>
+  <header>
+    <h1>EL FIADITO</h1>
+    <p>Fiados claros, cuentas claras</p>
+  </header>
 
-  <h1>Panel de Deudas</h1>
+  <main>
+    <!-- Registro Tendero -->
+    <section id="tendero-register" class="card">
+      <h2>Registrar Tendero</h2>
+      <input type="email" id="tenderoEmail" placeholder="Correo del tendero" />
+      <input type="password" id="tenderoPassword" placeholder="Contraseña" />
+      <button id="btnRegisterTendero">Registrar Tendero</button>
+    </section>
 
-  <!-- Login -->
-  <div class="login" id="loginDiv">
-    <h2>Iniciar Sesión</h2>
-    <input type="text" id="usuario" placeholder="Usuario o apodo">
-    <input type="password" id="password" placeholder="Contraseña (solo tendero)">
-    <button onclick="login()">Entrar</button>
-  </div>
+    <!-- Login Tendero -->
+    <section id="tendero-login" class="card">
+      <h2>Login Tendero</h2>
+      <input type="email" id="loginEmail" placeholder="Correo del tendero" />
+      <input type="password" id="loginPassword" placeholder="Contraseña" />
+      <button id="btnLoginTendero">Entrar</button>
+    </section>
 
-  <!-- Panel Tendero -->
-  <div class="panel hidden" id="panelTendero">
-    <h2>Panel del Tendero</h2>
-    <input type="text" id="clienteNombre" placeholder="Nombre o apodo del cliente">
-    <input type="number" id="clienteSaldo" placeholder="Monto (+ para sumar, - para restar)">
-    <button onclick="registrarCliente()">Registrar/Actualizar Deuda</button>
-    <h3>Clientes Registrados</h3>
-    <ul id="listaClientes"></ul>
-  </div>
+    <!-- Panel Tendero -->
+    <section id="panel-tendero" class="card hidden">
+      <h2>Panel del Tendero</h2>
+      <input type="text" id="clienteNombre" placeholder="Nombre o apodo cliente" />
+      <input type="number" id="clienteDeuda" placeholder="Monto (+ para sumar, - para restar)" />
+      <button id="btnRegistrarCliente">Registrar / Actualizar Deuda</button>
+      <button id="btnCerrarSesion">Cerrar Sesión</button>
+    </section>
 
-  <!-- Panel Cliente -->
-  <div class="panel hidden" id="panelCliente">
-    <h2>Panel del Cliente</h2>
-    <p id="saldoCliente"></p>
-  </div>
+    <!-- Consulta Cliente -->
+    <section id="cliente-consulta" class="card">
+      <h2>Consulta de Cliente</h2>
+      <input type="text" id="consultaClienteNombre" placeholder="Tu nombre o apodo (sin contraseña)" />
+      <button id="btnConsultarCliente">Ver Deuda</button>
+      <p id="resultadoConsulta"></p>
+    </section>
+  </main>
 
-  <script>
-    // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-  authDomain: "elfiadito-f00b9.firebaseapp.com",
-  projectId: "elfiadito-f00b9",
-  storageBucket: "elfiadito-f00b9.firebasestorage.app",
-  messagingSenderId: "595543495661",
-  appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
-  measurementId: "G-RD8QV631S5"
-};
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  <script type="module">
+    // --- Imports Firebase (mismo formato que tú usaste) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      increment
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // 🚪 Login
-    function login() {
-      const usuario = document.getElementById("usuario").value.trim().toLowerCase();
-      const password = document.getElementById("password").value.trim();
+    // --- Configuración Firebase (usa la tuya si quieres) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
+      authDomain: "elfiadito-f00b9.firebaseapp.com",
+      projectId: "elfiadito-f00b9",
+      storageBucket: "elfiadito-f00b9.appspot.com",
+      messagingSenderId: "595543495661",
+      appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
+      measurementId: "G-RD8QV631S5"
+    };
 
-      // Si es tendero
-      if (usuario === "tendero" && password === "1234") {
-        document.getElementById("loginDiv").classList.add("hidden");
-        document.getElementById("panelTendero").classList.remove("hidden");
-        cargarClientes();
-      } 
-      // Si es cliente
-      else if (usuario && !password) {
-        document.getElementById("loginDiv").classList.add("hidden");
-        document.getElementById("panelCliente").classList.remove("hidden");
-        mostrarSaldo(usuario);
-      } 
-      else {
-        alert("Credenciales inválidas. Tendero: tendero/1234 o cliente: solo apodo.");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ---- Registrar Tendero (email + password) ----
+    document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
+      const email = document.getElementById("tenderoEmail").value.trim();
+      const password = document.getElementById("tenderoPassword").value.trim();
+      if (!email || !password) {
+        alert("Completa correo y contraseña");
+        return;
       }
-    }
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Tendero registrado correctamente ✅");
+      } catch (error) {
+        alert("Error registrando tendero: " + error.message);
+      }
+    });
 
-    // 📌 Registrar cliente o actualizar deuda
-    async function registrarCliente() {
-      const nombre = document.getElementById("clienteNombre").value.trim().toLowerCase();
-      const monto = parseFloat(document.getElementById("clienteSaldo").value);
+    // ---- Login Tendero ----
+    document.getElementById("btnLoginTendero").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      if (!email || !password) {
+        alert("Ingresa correo y contraseña");
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // mostrar panel y ocultar login/registro
+        document.getElementById("tendero-login").classList.add("hidden");
+        document.getElementById("tendero-register").classList.add("hidden");
+        document.getElementById("panel-tendero").classList.remove("hidden");
+      } catch (error) {
+        alert("Error en login: " + error.message);
+      }
+    });
 
-      if (!nombre || isNaN(monto)) {
-        alert("Completa todos los campos.");
+    // ---- Cerrar sesión Tendero ----
+    document.getElementById("btnCerrarSesion").addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.warn("Sign out error:", e);
+      }
+      document.getElementById("panel-tendero").classList.add("hidden");
+      document.getElementById("tendero-login").classList.remove("hidden");
+      document.getElementById("tendero-register").classList.remove("hidden");
+    });
+
+    // ---- Registrar / Actualizar deuda (solo tendero) ----
+    document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
+      const nombreRaw = document.getElementById("clienteNombre").value.trim();
+      const monto = parseFloat(document.getElementById("clienteDeuda").value);
+
+      if (!nombreRaw || isNaN(monto)) {
+        alert("Completa nombre/apodo y monto (número)");
         return;
       }
 
-      const ref = db.collection("clientes").doc(nombre);
-      const docSnap = await ref.get();
+      const id = nombreRaw.toLowerCase();
+      const ref = doc(db, "clientes", id);
 
-      if (docSnap.exists) {
-        await ref.update({ saldo: firebase.firestore.FieldValue.increment(monto) });
-      } else {
-        await ref.set({ saldo: monto });
+      try {
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          // suma o resta usando increment (si monto negativo resta)
+          await updateDoc(ref, { deuda: increment(monto) });
+          alert("Saldo actualizado correctamente ✅");
+        } else {
+          // crea cliente nuevo con deuda inicial
+          await setDoc(ref, { nombre: nombreRaw, deuda: monto });
+          alert("Cliente creado y saldo registrado ✅");
+        }
+        // limpiar campos
+        document.getElementById("clienteNombre").value = "";
+        document.getElementById("clienteDeuda").value = "";
+      } catch (error) {
+        alert("Error registrando/actualizando cliente: " + error.message);
       }
+    });
 
-      cargarClientes();
-      document.getElementById("clienteNombre").value = "";
-      document.getElementById("clienteSaldo").value = "";
-    }
-
-    // 📋 Cargar clientes
-    async function cargarClientes() {
-      const lista = document.getElementById("listaClientes");
-      lista.innerHTML = "";
-      const snapshot = await db.collection("clientes").get();
-
-      snapshot.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = `${doc.id}: $${doc.data().saldo}`;
-        lista.appendChild(li);
-      });
-    }
-
-    // 👤 Mostrar saldo del cliente
-    async function mostrarSaldo(nombre) {
-      const ref = db.collection("clientes").doc(nombre);
-      const docSnap = await ref.get();
-
-      if (docSnap.exists) {
-        document.getElementById("saldoCliente").textContent = 
-          `Hola ${nombre}, tu saldo es: $${docSnap.data().saldo}`;
-      } else {
-        document.getElementById("saldoCliente").textContent = 
-          `No tienes deudas registradas.`;
+    // ---- Consulta de cliente (solo ver saldo con apodo) ----
+    document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
+      const nombreRaw = document.getElementById("consultaClienteNombre").value.trim();
+      const salida = document.getElementById("resultadoConsulta");
+      salida.innerText = "";
+      if (!nombreRaw) {
+        alert("Ingresa tu nombre o apodo");
+        return;
       }
-    }
+      const id = nombreRaw.toLowerCase();
+      try {
+        const snap = await getDoc(doc(db, "clientes", id));
+        if (snap.exists()) {
+          const data = snap.data();
+          salida.innerText = `Hola ${data.nombre}, tu saldo actual es: $${data.deuda}`;
+        } else {
+          salida.innerText = "No estás registrado en el sistema";
+        }
+      } catch (error) {
+        alert("Error consultando deuda: " + error.message);
+      }
+    });
+
+    // --- FIN script ---
   </script>
-
 </body>
 </html>
