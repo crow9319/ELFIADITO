@@ -101,7 +101,7 @@
       getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut 
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { 
-      getFirestore, doc, getDoc, setDoc, collection 
+      getFirestore, doc, getDoc, setDoc, collection, collectionGroup, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
     // Configuración Firebase
@@ -121,23 +121,19 @@
 
     // Registrar tendero
     document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
-    const email = document.getElementById("tenderoEmail").value;
-    const password = document.getElementById("tenderoPassword").value;
-    try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-    // 👇 Crear doc del tendero en Firestore
-    await setDoc(doc(db, "tenderos", userCred.user.uid), {
-      email: email,
-      creado: new Date(),
+      const email = document.getElementById("tenderoEmail").value;
+      const password = document.getElementById("tenderoPassword").value;
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "tenderos", userCred.user.uid), {
+          email: email,
+          creado: new Date(),
+        });
+        alert("Tendero registrado correctamente ✅");
+      } catch (error) {
+        alert("Error registrando tendero: " + error.message);
+      }
     });
-
-    alert("Tendero registrado correctamente ✅");
-    } catch (error) {
-    alert("Error registrando tendero: " + error.message);
-    }
-    });
-
 
     // Login tendero
     document.getElementById("btnLoginTendero").addEventListener("click", async () => {
@@ -161,32 +157,31 @@
       document.getElementById("tendero-register").classList.remove("hidden");
     });
 
-   // Registrar cliente (apodo + deuda)
-document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
-  const apodo = document.getElementById("clienteApodo").value.trim();
-  const deuda = parseFloat(document.getElementById("clienteDeuda").value);
-  const tendero = auth.currentUser;
+    // Registrar cliente
+    document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
+      const apodo = document.getElementById("clienteApodo").value.trim();
+      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+      const tendero = auth.currentUser;
 
-  if (!apodo || isNaN(deuda)) {
-    alert("Completa todos los campos");
-    return;
-  }
-  if (!tendero) {
-    alert("Debes iniciar sesión como tendero");
-    return;
-  }
+      if (!apodo || isNaN(deuda)) {
+        alert("Completa todos los campos");
+        return;
+      }
+      if (!tendero) {
+        alert("Debes iniciar sesión como tendero");
+        return;
+      }
 
-  try {
-    await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), apodo.toLowerCase()), {
-      apodo: apodo,
-      deuda: deuda,
+      try {
+        await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), apodo.toLowerCase()), {
+          apodo: apodo,
+          deuda: deuda,
+        });
+        alert("Cliente registrado correctamente ✅");
+      } catch (error) {
+        alert("Error registrando cliente: " + error.message);
+      }
     });
-    alert("Cliente registrado correctamente ✅");
-  } catch (error) {
-    alert("Error registrando cliente: " + error.message);
-  }
-});
-
 
     // Consultar deuda por apodo (sin login)
     document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
@@ -197,17 +192,18 @@ document.getElementById("btnRegistrarCliente").addEventListener("click", async (
       }
 
       try {
-        let encontrado = null;
+        const q = query(collectionGroup(db, "clientes"), where("apodo", "==", apodo));
+        const querySnap = await getDocs(q);
 
-        // 🔎 Buscar en todos los tenderos
-        const tenderosSnap = await getDoc(doc(db, "tenderos", "lista")); // esto se puede optimizar con indexación
-        // Simplificado: recorrer tenderos no está directo en getDoc, mejor consulta
-        // pero aquí dejamos lógica de prueba: 
-        // En producción se debe usar getDocs(collectionGroup(db, "clientes"))
-
-        document.getElementById("resultadoConsulta").innerText =
-          "⚠️ Función de búsqueda global por apodo debe implementarse con collectionGroup.";
-
+        if (querySnap.empty) {
+          document.getElementById("resultadoConsulta").innerText = "❌ No se encontró cliente con ese apodo.";
+        } else {
+          let result = "";
+          querySnap.forEach(doc => {
+            result += `💳 Cliente: ${doc.data().apodo} | Deuda: $${doc.data().deuda}\n`;
+          });
+          document.getElementById("resultadoConsulta").innerText = result;
+        }
       } catch (error) {
         alert("Error consultando deuda: " + error.message);
       }
