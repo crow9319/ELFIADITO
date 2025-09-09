@@ -186,25 +186,32 @@
       }
     });
 
-    // Consultar deuda del cliente usando correo del tendero + ID cliente
-    document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
-      const clienteId = document.getElementById("consultaClienteId").value;
-      const tenderoEmail = document.getElementById("consultaTenderoEmail").value;
+    <script>
+  // LOGIN DE CLIENTE SOLO POR APODO
+  document.getElementById("formCliente").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const apodo = document.getElementById("apodo").value.toLowerCase();
 
-      if (!clienteId || !tenderoEmail) {
-        alert("Ingresa el correo del tendero y el ID del cliente");
-        return;
+    try {
+      const ref = doc(db, "clientes", apodo);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        // Mostramos saldo
+        document.getElementById("saldoCliente").textContent =
+          "Saldo de " + apodo + ": $" + snap.data().saldo;
+        document.getElementById("loginCliente").style.display = "none";
+        document.getElementById("panelCliente").style.display = "block";
+      } else {
+        alert("⚠️ Cliente no encontrado, revisa el apodo.");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Error al consultar saldo.");
+    }
+  });
+</script>
 
-      try {
-        // Buscar tendero por correo
-        const tenderoQuery = query(collection(db, "tenderos"), where("email", "==", tenderoEmail));
-        const tenderoSnap = await getDocs(tenderoQuery);
-
-        if (tenderoSnap.empty) {
-          alert("No existe un tendero con ese correo");
-          return;
-        }
 
         let clienteEncontrado = null;
         for (const tenderoDoc of tenderoSnap.docs) {
