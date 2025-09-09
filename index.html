@@ -1,115 +1,185 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>App del Tendero</title>
-  <script type="module">
-    // ================== Configuración Firebase ==================
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { 
-      getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, query, where, getDocs 
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EL FIADITO</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background-color: #b71c1c;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      width: 100%;
+    }
+    main {
+      padding: 1rem;
+      max-width: 400px;
+      width: 100%;
+    }
+    .hidden { display: none; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #f9f9f9;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, button {
+      margin: 0.4rem 0;
+      padding: 0.6rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #b71c1c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover { background: #a31515; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EL FIADITO</h1>
+    <p>Fiados claros, cuentas claras</p>
+  </header>
 
+  <main>
+    <!-- Registro/Login Tendero -->
+    <section id="tendero-login" class="card">
+      <h2>Login Tendero</h2>
+      <input type="email" id="loginEmail" placeholder="Correo del tendero" />
+      <input type="password" id="loginPassword" placeholder="Contraseña" />
+      <button id="btnLoginTendero">Entrar</button>
+    </section>
+
+    <!-- Panel Tendero -->
+    <section id="panel-tendero" class="card hidden">
+      <h2>Panel del Tendero</h2>
+      <input type="text" id="clienteNombre" placeholder="Nombre o apodo cliente" />
+      <input type="number" id="clienteDeuda" placeholder="Monto (+ o -)" />
+      <button id="btnActualizarDeuda">Actualizar Saldo</button>
+      <button id="btnCerrarSesion">Cerrar Sesión</button>
+    </section>
+
+    <!-- Login Cliente -->
+    <section id="cliente-login" class="card">
+      <h2>Consulta Cliente</h2>
+      <input type="text" id="consultaClienteNombre" placeholder="Tu nombre o apodo" />
+      <button id="btnConsultarCliente">Ver Deuda</button>
+      <p id="resultadoConsulta"></p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { 
+      getAuth, signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, setDoc, updateDoc, increment 
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-      authDomain: "elfiadito-f0b09.firebaseapp.com",
-      projectId: "elfiadito-f0b09",
-      storageBucket: "elfiadito-f0b09.appspot.com",
+      authDomain: "elfiadito-f00b9.firebaseapp.com",
+      projectId: "elfiadito-f00b9",
+      storageBucket: "elfiadito-f00b9.appspot.com",
       messagingSenderId: "595543495661",
-      appId: "1:595543495661:web:808e79caa9ea6968de4",
-      measurementId: "G-RD8QV6315S"
+      appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
+      measurementId: "G-RD8QV631S5"
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // ================== Panel del Tendero ==================
-    async function registrarCliente() {
-      const nombre = document.getElementById("nombre").value.trim();
-      const saldo = Number(document.getElementById("saldo").value) || 0;
+    // Login tendero
+    document.getElementById("btnLoginTendero").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById("tendero-login").classList.add("hidden");
+        document.getElementById("panel-tendero").classList.remove("hidden");
+      } catch (error) {
+        alert("Error en login: " + error.message);
+      }
+    });
 
+    // Cerrar sesión
+    document.getElementById("btnCerrarSesion").addEventListener("click", async () => {
+      await auth.signOut();
+      document.getElementById("panel-tendero").classList.add("hidden");
+      document.getElementById("tendero-login").classList.remove("hidden");
+    });
+
+    // Actualizar deuda (suma o resta)
+    document.getElementById("btnActualizarDeuda").addEventListener("click", async () => {
+      const nombre = document.getElementById("clienteNombre").value.trim();
+      const monto = parseFloat(document.getElementById("clienteDeuda").value);
+
+      if (!nombre || isNaN(monto)) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      try {
+        const ref = doc(db, "clientes", nombre.toLowerCase());
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          // Si ya existe el cliente, sumamos/restamos
+          await updateDoc(ref, { deuda: increment(monto) });
+          alert("Saldo actualizado correctamente ✅");
+        } else {
+          // Si no existe, lo creamos con esa deuda inicial
+          await setDoc(ref, { nombre: nombre, deuda: monto });
+          alert("Cliente creado y saldo registrado ✅");
+        }
+      } catch (error) {
+        alert("Error actualizando deuda: " + error.message);
+      }
+    });
+
+    // Consulta de cliente (solo ver saldo)
+    document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
+      const nombre = document.getElementById("consultaClienteNombre").value.trim();
       if (!nombre) {
-        alert("Escribe un nombre o apodo");
+        alert("Ingresa tu nombre o apodo");
         return;
       }
 
-      await addDoc(collection(db, "clientes"), { nombre, saldo });
-      document.getElementById("nombre").value = "";
-      document.getElementById("saldo").value = "";
-    }
-
-    function cargarClientes() {
-      const lista = document.getElementById("lista-clientes");
-      onSnapshot(collection(db, "clientes"), (snapshot) => {
-        lista.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-          const cliente = docSnap.data();
-          const li = document.createElement("li");
-          li.textContent = `${cliente.nombre} — Saldo: $${cliente.saldo} `;
-
-          const btnMenos = document.createElement("button");
-          btnMenos.textContent = "-1000";
-          btnMenos.onclick = () => modificarSaldo(docSnap.id, cliente.saldo - 1000);
-
-          const btnMas = document.createElement("button");
-          btnMas.textContent = "+1000";
-          btnMas.onclick = () => modificarSaldo(docSnap.id, cliente.saldo + 1000);
-
-          li.appendChild(btnMenos);
-          li.appendChild(btnMas);
-          lista.appendChild(li);
-        });
-      });
-    }
-
-    async function modificarSaldo(id, nuevoSaldo) {
-      const ref = doc(db, "clientes", id);
-      await updateDoc(ref, { saldo: nuevoSaldo });
-    }
-
-    // ================== Panel del Cliente ==================
-    async function buscarCliente() {
-      const apodo = document.getElementById("apodo").value.trim();
-      const salida = document.getElementById("resultado");
-      if (!apodo) {
-        salida.textContent = "Escribe tu apodo.";
-        return;
+      try {
+        const ref = doc(db, "clientes", nombre.toLowerCase());
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById("resultadoConsulta").innerText =
+            `Hola ${data.nombre}, tu saldo actual es: $${data.deuda}`;
+        } else {
+          alert("No estás registrado en el sistema");
+        }
+      } catch (error) {
+        alert("Error consultando deuda: " + error.message);
       }
+    });
 
-      const q = query(collection(db, "clientes"), where("nombre", "==", apodo));
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        salida.textContent = "Cliente no encontrado.";
-        return;
-      }
-
-      const data = snapshot.docs[0].data();
-      salida.textContent = `${data.nombre}, tu saldo es: $${data.saldo}`;
-    }
-
-    // ================== Inicializar ==================
-    window.onload = () => {
-      document.getElementById("registrar").addEventListener("click", registrarCliente);
-      document.getElementById("consultar").addEventListener("click", buscarCliente);
-      cargarClientes();
-    };
   </script>
-</head>
-<body>
-  <h2>📌 Panel del Tendero</h2>
-  <input id="nombre" placeholder="Nombre o apodo">
-  <input id="saldo" type="number" placeholder="Saldo inicial">
-  <button id="registrar">Registrar</button>
-
-  <h3>Lista de clientes</h3>
-  <ul id="lista-clientes"></ul>
-
-  <hr>
-
-  <h2>👤 Panel del Cliente</h2>
-  <input id="apodo" placeholder="Escribe tu apodo">
-  <button id="consultar">Consultar saldo</button>
-  <p id="resultado"></p>
 </body>
 </html>
