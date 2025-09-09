@@ -90,6 +90,7 @@
     <!-- Consulta de cliente -->
     <section id="cliente-consulta" class="card">
       <h2>Consulta de Cliente</h2>
+      <input type="email" id="consultaTenderoEmail" placeholder="Correo del tendero" />
       <input type="text" id="consultaClienteId" placeholder="ID del cliente" />
       <button id="btnConsultarCliente">Ver Deuda</button>
       <p id="resultadoConsulta"></p>
@@ -102,7 +103,7 @@
       getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut 
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { 
-      getFirestore, doc, getDoc, setDoc, collection 
+      getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs 
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
     // Configuración Firebase
@@ -125,7 +126,11 @@
       const email = document.getElementById("tenderoEmail").value;
       const password = document.getElementById("tenderoPassword").value;
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        // Guardamos tendero en Firestore
+        await setDoc(doc(db, "tenderos", cred.user.uid), {
+          email: email
+        });
         alert("Tendero registrado correctamente ✅");
       } catch (error) {
         alert("Error registrando tendero: " + error.message);
@@ -156,62 +161,70 @@
 
     // Registrar cliente con deuda (vinculado al tendero logueado)
     document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
-    const clienteId = document.getElementById("clienteId").value;
-    const clienteNombre = document.getElementById("clienteNombre").value;
-    const deuda = parseFloat(document.getElementById("clienteDeuda").value);
-    const tendero = auth.currentUser; // tendero logueado
+      const clienteId = document.getElementById("clienteId").value;
+      const clienteNombre = document.getElementById("clienteNombre").value;
+      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+      const tendero = auth.currentUser;
 
-    if (!clienteId || !clienteNombre || isNaN(deuda)) {
-    alert("Completa todos los campos");
-    return;
-    }
-    if (!tendero) {
-    alert("Debes iniciar sesión como tendero");
-    return;
-    }
+      if (!clienteId || !clienteNombre || isNaN(deuda)) {
+        alert("Completa todos los campos");
+        return;
+      }
+      if (!tendero) {
+        alert("Debes iniciar sesión como tendero");
+        return;
+      }
 
-    try {
-    await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), clienteId), {
-      nombre: clienteNombre,
-      deuda: deuda,
+      try {
+        await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), clienteId), {
+          nombre: clienteNombre,
+          deuda: deuda,
+        });
+        alert("Cliente registrado correctamente ✅");
+      } catch (error) {
+        alert("Error registrando cliente: " + error.message);
+      }
     });
-    alert("Cliente registrado correctamente ✅");
-    } catch (error) {
-    alert("Error registrando cliente: " + error.message);
-    }
-    });
 
-
-    // Consultar deuda del cliente (buscando en todos los tenderos)
+    // Consultar deuda del cliente usando correo del tendero + ID cliente
     document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
-    const clienteId = document.getElementById("consultaClienteId").value;
-    if (!clienteId) {
-    alert("Ingresa tu ID");
-    return;
-    }
+      const clienteId = document.getElementById("consultaClienteId").value;
+      const tenderoEmail = document.getElementById("consultaTenderoEmail").value;
 
-    try {
-    // El cliente puede estar en cualquier tendero → recorremos tenderos
-    const tenderoDocs = await getDoc(doc(db, "tenderos", auth.currentUser?.uid || "anon"));
-    let clienteEncontrado = null;
+      if (!clienteId || !tenderoEmail) {
+        alert("Ingresa el correo del tendero y el ID del cliente");
+        return;
+      }
 
-    if (tenderoDocs.exists()) {
-      const clienteSnap = await getDoc(doc(db, "tenderos", auth.currentUser.uid, "clientes", clienteId));
-      if (clienteSnap.exists()) clienteEncontrado = clienteSnap.data();
-    }
+      try {
+        // Buscar tendero por correo
+        const tenderoQuery = query(collection(db, "tenderos"), where("email", "==", tenderoEmail));
+        const tenderoSnap = await getDocs(tenderoQuery);
 
-    if (clienteEncontrado) {
-      document.getElementById("resultadoConsulta").innerText =
-        `Hola ${clienteEncontrado.nombre}, debes: $${clienteEncontrado.deuda}`;
-    } else {
-      alert("No existe un cliente con ese ID");
-    }
-    } catch (error) {
-    alert("Error consultando deuda: " + error.message);
-    }
+        if (tenderoSnap.empty) {
+          alert("No existe un tendero con ese correo");
+          return;
+        }
+
+        let clienteEncontrado = null;
+        for (const tenderoDoc of tenderoSnap.docs) {
+          const clienteSnap = await getDoc(doc(db, "tenderos", tenderoDoc.id, "clientes", clienteId));
+          if (clienteSnap.exists()) {
+            clienteEncontrado = clienteSnap.data();
+            break;
+          }
+        }
+
+        if (clienteEncontrado) {
+          document.getElementById("resultadoConsulta").innerText =
+            `Hola ${clienteEncontrado.nombre}, debes: $${clienteEncontrado.deuda}`;
+        } else {
+          alert("No existe un cliente con ese ID en este tendero");
+        }
+      } catch (error) {
+        alert("Error consultando deuda: " + error.message);
+      }
     });
-
-
   </script>
 </body>
 </html>
