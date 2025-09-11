@@ -52,6 +52,20 @@
     button:hover {
       background: #a31515;
     }
+    .status-message {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        text-align: center;
+    }
+    .status-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
   </style>
 </head>
 <body>
@@ -67,6 +81,7 @@
       <input type="email" id="tenderoEmail" placeholder="Correo del tendero" />
       <input type="password" id="tenderoPassword" placeholder="Contraseña" />
       <button id="btnRegisterTendero">Registrar Tendero</button>
+      <p id="tenderoRegisterStatus" class="status-message hidden"></p>
     </section>
 
     <!-- Login de tendero -->
@@ -75,138 +90,312 @@
       <input type="email" id="loginEmail" placeholder="Correo del tendero" />
       <input type="password" id="loginPassword" placeholder="Contraseña" />
       <button id="btnLoginTendero">Entrar</button>
+      <p id="tenderoLoginStatus" class="status-message hidden"></p>
     </section>
 
     <!-- Panel de tendero -->
     <section id="panel-tendero" class="card hidden">
       <h2>Panel del Tendero</h2>
+      <p>Bienvenido, <span id="tenderoDisplayName"></span>!</p>
+
+      <h3>Registrar Nuevo Cliente</h3>
+      <input type="email" id="clienteEmail" placeholder="Correo del cliente (para login)" />
+      <input type="password" id="clientePassword" placeholder="Contraseña del cliente (para login)" />
       <input type="text" id="clienteApodo" placeholder="Apodo del cliente" />
-      <input type="number" id="clienteDeuda" placeholder="Monto de la deuda" />
+      <input type="number" id="clienteDeuda" placeholder="Monto de la deuda inicial" />
       <button id="btnRegistrarCliente">Registrar Cliente</button>
-      <button id="btnCerrarSesion">Cerrar Sesión</button>
+      <p id="clienteRegisterStatus" class="status-message hidden"></p>
+
+      <h3>Actualizar Deuda de Cliente</h3>
+      <input type="email" id="updateClienteEmail" placeholder="Correo del cliente a actualizar" />
+      <input type="number" id="updateClienteDeuda" placeholder="Nuevo monto de deuda" />
+      <button id="btnActualizarDeuda">Actualizar Deuda</button>
+      <p id="clienteUpdateStatus" class="status-message hidden"></p>
+
+      <button id="btnCerrarSesionTendero">Cerrar Sesión Tendero</button>
     </section>
 
-    <!-- Consulta de cliente -->
-    <section id="cliente-consulta" class="card">
-      <h2>Consulta de Cliente</h2>
-      <input type="text" id="consultaClienteApodo" placeholder="Escribe tu apodo" />
-      <button id="btnConsultarCliente">Ver Deuda</button>
-      <p id="resultadoConsulta"></p>
+    <!-- Login de cliente -->
+    <section id="cliente-login" class="card">
+      <h2>Login Cliente</h2>
+      <input type="email" id="clienteLoginEmail" placeholder="Tu correo" />
+      <input type="password" id="clienteLoginPassword" placeholder="Tu contraseña" />
+      <button id="btnLoginCliente">Entrar como Cliente</button>
+      <p id="clienteLoginStatus" class="status-message hidden"></p>
+    </section>
+
+    <!-- Panel de cliente -->
+    <section id="panel-cliente" class="card hidden">
+      <h2>Mi Deuda</h2>
+      <p>Hola, <span id="clientePanelApodo"></span>!</p>
+      <p>Tu deuda actual es: $<span id="clientePanelDeuda"></span></p>
+      <button id="btnCerrarSesionCliente">Cerrar Sesión Cliente</button>
     </section>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { 
-      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut 
+      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { 
-      getFirestore, doc, getDoc, setDoc, collection, collectionGroup, query, where, getDocs
+      getFirestore, doc, getDoc, setDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-    // Configuración Firebase
+    // Configuración Firebase - ¡Asegúrate que esta sea tu configuración real del proyecto!
     const firebaseConfig = {
-      apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w",
-      authDomain: "elfiadito-f00b9.firebaseapp.com",
-      projectId: "elfiadito-f00b9",
-      storageBucket: "elfiadito-f00b9.appspot.com",
-      messagingSenderId: "595543495661",
-      appId: "1:595543495661:web:808e79ca3ae9eaa6968de4",
-      measurementId: "G-RD8QV631S5"
+      apiKey: "AIzaSyBdh3PMDoil-PGAcblNVqeJbgehXV1aM8w", // Tu apiKey
+      authDomain: "elfiadito-f00b9.firebaseapp.com", // Tu authDomain
+      projectId: "elfiadito-f00b9", // Tu projectId
+      storageBucket: "elfiadito-f00b9.appspot.com", // Tu storageBucket
+      messagingSenderId: "595543495661", // Tu messagingSenderId
+      appId: "1:595543495661:web:808e79ca3ae9eaa6968de4", // Tu appId
+      measurementId: "G-RD8QV631S5" // Tu measurementId
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Registrar tendero
+    // --- Funciones de Utilidad ---
+    function showStatus(elementId, message, isError = false) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.classList.remove("hidden", "status-success", "status-error");
+      element.classList.add(isError ? "status-error" : "status-success");
+    }
+
+    function hideStatus(elementId) {
+      document.getElementById(elementId).classList.add("hidden");
+    }
+
+    // --- Lógica de Autenticación y Firestore ---
+
+    // Listener de estado de autenticación (para manejar la interfaz)
+    onAuthStateChanged(auth, async (user) => {
+        // Ocultar todos los paneles inicialmente
+        document.getElementById("tendero-register").classList.add("hidden");
+        document.getElementById("tendero-login").classList.add("hidden");
+        document.getElementById("panel-tendero").classList.add("hidden");
+        document.getElementById("cliente-login").classList.add("hidden");
+        document.getElementById("panel-cliente").classList.add("hidden");
+
+        if (user) {
+            // Un usuario está logeado. Determinar si es tendero o cliente.
+            const tenderoDocRef = doc(db, "tenderos", user.uid);
+            const tenderoDocSnap = await getDoc(tenderoDocRef);
+
+            if (tenderoDocSnap.exists()) {
+                // Es un tendero
+                document.getElementById("tenderoDisplayName").textContent = user.email;
+                document.getElementById("panel-tendero").classList.remove("hidden");
+                // Resetear campos del tendero
+                document.getElementById("clienteEmail").value = "";
+                document.getElementById("clientePassword").value = "";
+                document.getElementById("clienteApodo").value = "";
+                document.getElementById("clienteDeuda").value = "";
+                hideStatus("clienteRegisterStatus");
+                document.getElementById("updateClienteEmail").value = "";
+                document.getElementById("updateClienteDeuda").value = "";
+                hideStatus("clienteUpdateStatus");
+
+            } else {
+                // Es un cliente
+                const clienteDocRef = doc(db, "clientes", user.uid);
+                const clienteDocSnap = await getDoc(clienteDocRef);
+                if (clienteDocSnap.exists()) {
+                    document.getElementById("clientePanelApodo").textContent = clienteDocSnap.data().apodo;
+                    document.getElementById("clientePanelDeuda").textContent = clienteDocSnap.data().deuda;
+                    document.getElementById("panel-cliente").classList.remove("hidden");
+                } else {
+                    // Usuario logeado pero no es tendero ni cliente en Firestore (ej. recién registrado por error)
+                    alert("Tu cuenta no está asociada a ningún rol (tendero/cliente). Por favor, contacta al administrador.");
+                    signOut(auth); // Cerrar sesión para evitar confusión
+                }
+            }
+        } else {
+            // Nadie está logeado, mostrar opciones de login/registro iniciales
+            document.getElementById("tendero-login").classList.remove("hidden");
+            document.getElementById("tendero-register").classList.remove("hidden");
+            document.getElementById("cliente-login").classList.remove("hidden");
+            // Limpiar estados
+            hideStatus("tenderoRegisterStatus");
+            hideStatus("tenderoLoginStatus");
+            hideStatus("clienteLoginStatus");
+        }
+    });
+
+
+    // --- Tendero: Registro ---
     document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
       const email = document.getElementById("tenderoEmail").value;
       const password = document.getElementById("tenderoPassword").value;
+      hideStatus("tenderoRegisterStatus");
+
       try {
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, "tenderos", userCred.user.uid), {
           email: email,
           creado: new Date(),
         });
-        alert("Tendero registrado correctamente ✅");
+        showStatus("tenderoRegisterStatus", "Tendero registrado correctamente ✅", false);
+        // No redirigir directamente, onAuthStateChanged manejará la UI
       } catch (error) {
-        alert("Error registrando tendero: " + error.message);
+        showStatus("tenderoRegisterStatus", "Error registrando tendero: " + error.message, true);
       }
     });
 
-    // Login tendero
+    // --- Tendero: Login ---
     document.getElementById("btnLoginTendero").addEventListener("click", async () => {
       const email = document.getElementById("loginEmail").value;
       const password = document.getElementById("loginPassword").value;
+      hideStatus("tenderoLoginStatus");
+
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        document.getElementById("tendero-login").classList.add("hidden");
-        document.getElementById("tendero-register").classList.add("hidden");
-        document.getElementById("panel-tendero").classList.remove("hidden");
+        showStatus("tenderoLoginStatus", "Login exitoso ✅", false);
+        // onAuthStateChanged manejará la UI
       } catch (error) {
-        alert("Error en login: " + error.message);
+        showStatus("tenderoLoginStatus", "Error en login: " + error.message, true);
       }
     });
 
-    // Cerrar sesión
-    document.getElementById("btnCerrarSesion").addEventListener("click", async () => {
+    // --- Tendero: Cerrar Sesión ---
+    document.getElementById("btnCerrarSesionTendero").addEventListener("click", async () => {
       await signOut(auth);
-      document.getElementById("panel-tendero").classList.add("hidden");
-      document.getElementById("tendero-login").classList.remove("hidden");
-      document.getElementById("tendero-register").classList.remove("hidden");
+      // onAuthStateChanged manejará la UI
     });
 
-    // Registrar cliente
+    // --- Tendero: Registrar Cliente ---
     document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
-      const apodo = document.getElementById("clienteApodo").value.trim();
-      const deuda = parseFloat(document.getElementById("clienteDeuda").value);
+      const clienteEmail = document.getElementById("clienteEmail").value.trim();
+      const clientePassword = document.getElementById("clientePassword").value.trim();
+      const clienteApodo = document.getElementById("clienteApodo").value.trim();
+      const clienteDeuda = parseFloat(document.getElementById("clienteDeuda").value);
       const tendero = auth.currentUser;
+      hideStatus("clienteRegisterStatus");
 
-      if (!apodo || isNaN(deuda)) {
-        alert("Completa todos los campos");
+      if (!clienteEmail || !clientePassword || !clienteApodo || isNaN(clienteDeuda) || clienteDeuda < 0) {
+        showStatus("clienteRegisterStatus", "Completa todos los campos y asegúrate que la deuda sea un número positivo.", true);
         return;
       }
       if (!tendero) {
-        alert("Debes iniciar sesión como tendero");
+        showStatus("clienteRegisterStatus", "Debes iniciar sesión como tendero para registrar clientes.", true);
         return;
       }
 
       try {
-        await setDoc(doc(collection(db, "tenderos", tendero.uid, "clientes"), apodo.toLowerCase()), {
-          apodo: apodo,
-          deuda: deuda,
+        // 1. Crear cuenta de autenticación para el cliente
+        const clienteAuth = getAuth(app); // Usar una instancia de auth separada si no se quiere que el tendero se desloguee
+                                        // Ojo: createUserWithEmailAndPassword loguea al nuevo usuario, luego el tendero se deslogueará.
+                                        // Mejor manejar con Cloud Functions o solo crear la cuenta sin loguear.
+                                        // Para este ejemplo, simplificamos y el tendero se "desloguea" brevemente al crear al cliente.
+
+        // Crea el usuario en Firebase Auth
+        const clientUserCred = await createUserWithEmailAndPassword(clienteAuth, clienteEmail, clientePassword);
+        const newClientUid = clientUserCred.user.uid;
+
+        // 2. Guardar datos del cliente en Firestore
+        await setDoc(doc(db, "clientes", newClientUid), {
+          apodo: clienteApodo,
+          email: clienteEmail, // Guardar el email para referencia del tendero si es necesario
+          deuda: clienteDeuda,
+          tenderoUid: tendero.uid, // Vincular el cliente al tendero que lo registró
+          fechaRegistro: new Date(),
         });
-        alert("Cliente registrado correctamente ✅");
+
+        // 3. Volver a loguear al tendero (si createUserWithEmailAndPassword lo deslogueó)
+        // Esto es un workaround. Lo ideal es no desloguear al tendero al crear un cliente.
+        // Una Cloud Function que cree el usuario de forma administrativa sería la mejor solución.
+        // Por la simplicidad del navegador, haremos que el tendero se loguee de nuevo si fue deslogueado.
+        await signInWithEmailAndPassword(auth, tendero.email, "TU_PASSWORD_TENDERO"); // <<-- ¡Ojo aquí! Necesitas la contraseña del tendero
+
+        showStatus("clienteRegisterStatus", `Cliente '${clienteApodo}' registrado correctamente ✅`, false);
+        // Limpiar campos después del registro
+        document.getElementById("clienteEmail").value = "";
+        document.getElementById("clientePassword").value = "";
+        document.getElementById("clienteApodo").value = "";
+        document.getElementById("clienteDeuda").value = "";
       } catch (error) {
-        alert("Error registrando cliente: " + error.message);
+        // Si hay un error al crear el usuario en Auth (ej. email ya existe), borrar el documento si se creó antes.
+        showStatus("clienteRegisterStatus", "Error registrando cliente: " + error.message, true);
       }
     });
 
-    // Consultar deuda por apodo (sin login)
-    document.getElementById("btnConsultarCliente").addEventListener("click", async () => {
-      const apodo = document.getElementById("consultaClienteApodo").value.trim().toLowerCase();
-      if (!apodo) {
-        alert("Ingresa tu apodo");
+    // --- Tendero: Actualizar Deuda de Cliente ---
+    document.getElementById("btnActualizarDeuda").addEventListener("click", async () => {
+      const updateClienteEmail = document.getElementById("updateClienteEmail").value.trim();
+      const newDeuda = parseFloat(document.getElementById("updateClienteDeuda").value);
+      const tenderoUid = auth.currentUser ? auth.currentUser.uid : null;
+      hideStatus("clienteUpdateStatus");
+
+      if (!updateClienteEmail || isNaN(newDeuda) || newDeuda < 0) {
+        showStatus("clienteUpdateStatus", "Ingresa el correo del cliente y un monto de deuda válido.", true);
+        return;
+      }
+      if (!tenderoUid) {
+        showStatus("clienteUpdateStatus", "Debes iniciar sesión como tendero para actualizar deudas.", true);
         return;
       }
 
       try {
-        const q = query(collectionGroup(db, "clientes"), where("apodo", "==", apodo));
-        const querySnap = await getDocs(q);
+        // Buscar el UID del cliente por su email (esto requeriría una Cloud Function para ser seguro)
+        // Ojo: Buscar el UID de un usuario de Auth por su email NO es posible desde el cliente directamente por seguridad.
+        // La mejor manera sería que el tendero consulte sus propios clientes y elija de una lista.
+        // Para simplificar aquí, ASUMIMOS que el tendero sabe el email del cliente y que el email es único y no hay riesgo.
+        // ¡En un entorno real, necesitarías una forma más robusta de vincular email a UID para actualización!
 
-        if (querySnap.empty) {
-          document.getElementById("resultadoConsulta").innerText = "❌ No se encontró cliente con ese apodo.";
-        } else {
-          let result = "";
-          querySnap.forEach(doc => {
-            result += `💳 Cliente: ${doc.data().apodo} | Deuda: $${doc.data().deuda}\n`;
-          });
-          document.getElementById("resultadoConsulta").innerText = result;
+        // *************** SOLUCIÓN TEMPORAL E INSEGURA EN EL CLIENTE *******************
+        // Esto NO se debe hacer en producción. Para buscar un UID por email, necesitas una Cloud Function
+        // o que el tendero gestione a sus clientes desde una lista pre-cargada.
+        // La única forma en el cliente sería si la búsqueda se hiciera por un campo indexado en Firestore
+        // (ej. si guardaste el email del cliente en su documento de Firestore).
+        // Si ya tienes el `email` en el documento `clientes`, puedes hacer una query así:
+
+        const clientesCollectionRef = collection(db, "clientes");
+        const q = query(clientesCollectionRef, where("email", "==", updateClienteEmail), where("tenderoUid", "==", tenderoUid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          showStatus("clienteUpdateStatus", "Cliente no encontrado o no registrado por este tendero.", true);
+          return;
         }
+
+        const clienteDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, "clientes", clienteDoc.id), {
+          deuda: newDeuda,
+          fechaActualizacion: new Date(),
+        });
+
+        showStatus("clienteUpdateStatus", `Deuda de '${updateClienteEmail}' actualizada a $${newDeuda} ✅`, false);
+        document.getElementById("updateClienteEmail").value = "";
+        document.getElementById("updateClienteDeuda").value = "";
+
       } catch (error) {
-        alert("Error consultando deuda: " + error.message);
+        showStatus("clienteUpdateStatus", "Error actualizando deuda: " + error.message, true);
       }
+    });
+
+
+    // --- Cliente: Login ---
+    document.getElementById("btnLoginCliente").addEventListener("click", async () => {
+      const email = document.getElementById("clienteLoginEmail").value;
+      const password = document.getElementById("clienteLoginPassword").value;
+      hideStatus("clienteLoginStatus");
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showStatus("clienteLoginStatus", "Login de cliente exitoso ✅", false);
+        // onAuthStateChanged manejará la UI
+      } catch (error) {
+        showStatus("clienteLoginStatus", "Error en login de cliente: " + error.message, true);
+      }
+    });
+
+    // --- Cliente: Cerrar Sesión ---
+    document.getElementById("btnCerrarSesionCliente").addEventListener("click", async () => {
+      await signOut(auth);
+      // onAuthStateChanged manejará la UI
     });
 
   </script>
