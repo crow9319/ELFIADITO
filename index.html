@@ -158,7 +158,7 @@
       <p>Bienvenido, <span id="tenderoDisplayName"></span>!</p>
 
       <h3>Registrar Nuevo Cliente</h3>
-      <p>Para registrar un cliente y su cuenta, usaremos una **función en la nube segura**.</p>
+      <p>Para registrar un cliente y su cuenta, usaremos una <strong>función en la nube segura</strong>.</p>
       <input type="email" id="clienteEmail" placeholder="Correo del cliente" />
       <input type="password" id="clientePassword" placeholder="Contraseña del cliente (mínimo 6 caracteres)" />
       <input type="text" id="clienteApodo" placeholder="Apodo del cliente" />
@@ -206,6 +206,9 @@
     import { 
       getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    // IMPORTANTE: Agregamos el módulo de Cloud Functions
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-functions.js";
+
 
     // Configuración Firebase - ¡Asegúrate que esta sea tu configuración real del proyecto!
     const firebaseConfig = {
@@ -221,6 +224,9 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    // Inicializamos el servicio de funciones
+    const functions = getFunctions(app); // Necesario para llamar a httpsCallable
+
 
     // --- Funciones de Utilidad ---
     function showStatus(elementId, message, isError = false) {
@@ -369,7 +375,7 @@
       // onAuthStateChanged manejará la UI volviendo a la selección de rol
     });
 
-    // --- Tendero: Registrar Cliente (¡Aquí la SOLUCIÓN CLOUD FUNCTIONS!) ---
+    // --- Tendero: Registrar Cliente (¡Ahora usando Cloud Function!) ---
     document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
       const clienteEmail = document.getElementById("clienteEmail").value.trim();
       const clientePassword = document.getElementById("clientePassword").value.trim();
@@ -382,40 +388,43 @@
         showStatus("clienteRegisterStatus", "Completa todos los campos y asegúrate que la deuda sea un número positivo.", true);
         return;
       }
+      if (clientePassword.length < 6) { // Validación de contraseña mínima
+        showStatus("clienteRegisterStatus", "La contraseña del cliente debe tener al menos 6 caracteres.", true);
+        return;
+      }
       if (!tendero) {
         showStatus("clienteRegisterStatus", "Debes iniciar sesión como tendero para registrar clientes.", true);
         return;
       }
 
-      // --- PASO CLAVE: LLAMADA A CLOUD FUNCTION ---
-      // Aquí harías una llamada a tu Cloud Function para crear el cliente
-      // Ejemplo (necesitas desplegar esta función en Firebase):
-      // const createClientFn = httpsCallable(functions, 'createClientByTendero');
-      // try {
-      //   const result = await createClientFn({
-      //     email: clienteEmail,
-      //     password: clientePassword,
-      //     apodo: clienteApodo,
-      //     deuda: clienteDeuda
-      //   });
-      //   showStatus("clienteRegisterStatus", `Cliente '${clienteApodo}' registrado correctamente ✅`, false);
-      //   // Limpiar campos
-      //   document.getElementById("clienteEmail").value = "";
-      //   document.getElementById("clientePassword").value = "";
-      //   document.getElementById("clienteApodo").value = "";
-      //   document.getElementById("clienteDeuda").value = "";
-      // } catch (error) {
-      //   showStatus("clienteRegisterStatus", "Error registrando cliente (Cloud Function): " + error.message, true);
-      // }
+      try {
+        // Obtenemos una referencia a la Cloud Function 'createClientByTendero'
+        const createClientFn = httpsCallable(functions, 'createClientByTendero');
+        
+        // Llamamos a la función con los datos del cliente
+        const result = await createClientFn({
+          email: clienteEmail,
+          password: clientePassword,
+          apodo: clienteApodo,
+          deuda: clienteDeuda
+        });
 
-      // --- MIENTRAS TANTO, SOLO PARA DEMOSTRACIÓN (NO USAR EN PRODUCCIÓN) ---
-      // Simula el éxito, o podrías usar una alerta de que la función debe ser implementada.
-      alert("¡Importante! La funcionalidad de 'Registrar Cliente' debe implementarse con una Cloud Function segura para evitar problemas de autenticación y seguridad.");
-      showStatus("clienteRegisterStatus", `Simulación: Cliente '${clienteApodo}' registrado correctamente. (Requiere Cloud Function)`, false);
-      document.getElementById("clienteEmail").value = "";
-      document.getElementById("clientePassword").value = "";
-      document.getElementById("clienteApodo").value = "";
-      document.getElementById("clienteDeuda").value = "";
+        // La función retornará un mensaje si todo fue exitoso
+        showStatus("clienteRegisterStatus", `Cliente '${clienteApodo}' registrado correctamente ✅`, false);
+        console.log("Respuesta de Cloud Function:", result.data.message);
+
+        // Limpiar campos después de un registro exitoso
+        document.getElementById("clienteEmail").value = "";
+        document.getElementById("clientePassword").value = "";
+        document.getElementById("clienteApodo").value = "";
+        document.getElementById("clienteDeuda").value = "";
+
+      } catch (error) {
+        // Manejamos los errores que vienen de la Cloud Function (HttpsError)
+        // error.message contendrá el mensaje que lanzamos desde la función
+        showStatus("clienteRegisterStatus", `Error registrando cliente: ${error.message}`, true);
+        console.error("Error al llamar a Cloud Function:", error.code, error.message, error.details);
+      }
     });
 
     // --- Tendero: Actualizar Deuda de Cliente ---
