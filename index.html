@@ -7,13 +7,14 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #fff;
-      color: #222;
+      background-color: #f0f2f5; /* Un fondo más suave */
+      color: #333;
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
     header {
       background-color: #b71c1c;
@@ -21,50 +22,101 @@
       padding: 1rem;
       text-align: center;
       width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     main {
       padding: 1rem;
-      max-width: 400px;
+      max-width: 450px; /* Un poco más ancho para mejor legibilidad */
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-grow: 1; /* Para que ocupe el espacio disponible */
     }
-    .hidden { display: none; }
+    .hidden { display: none !important; } /* Usar !important para asegurar */
     .card {
-      border: 1px solid #ccc;
+      background: white;
       border-radius: 8px;
-      padding: 1rem;
+      padding: 1.5rem;
       margin: 1rem 0;
-      background: #f9f9f9;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    input, button {
-      margin: 0.4rem 0;
-      padding: 0.6rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Sombra más pronunciada */
       width: 100%;
+      box-sizing: border-box; /* Incluir padding en el width */
+    }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    input[type="number"] {
+      margin: 0.6rem 0;
+      padding: 0.8rem;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
       box-sizing: border-box;
+      font-size: 1rem;
     }
     button {
       background: #b71c1c;
       color: white;
       border: none;
+      padding: 0.8rem 1.2rem;
       cursor: pointer;
       border-radius: 4px;
+      font-size: 1rem;
+      width: 100%; /* Botones siempre al 100% */
+      margin-top: 0.8rem;
     }
     button:hover {
       background: #a31515;
     }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
     .status-message {
-        margin-top: 10px;
-        padding: 8px;
-        border-radius: 4px;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
         text-align: center;
+        font-size: 0.9rem;
     }
     .status-success {
         background-color: #d4edda;
         color: #155724;
+        border: 1px solid #c3e6cb;
     }
     .status-error {
         background-color: #f8d7da;
         color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    /* Estilos para la selección de rol */
+    #role-selection {
+        text-align: center;
+        margin-top: 3rem;
+    }
+    #role-selection button {
+        margin: 1rem;
+        padding: 1.2rem 2rem;
+        font-size: 1.2rem;
+        border-radius: 8px;
+        background-color: #4CAF50; /* Un verde amigable */
+    }
+    #role-selection button:hover {
+        background-color: #45a049;
+    }
+    #role-selection button:first-of-type {
+        background-color: #b71c1c; /* Color de Firebase para Tendero */
+    }
+    #role-selection button:first-of-type:hover {
+        background-color: #a31515;
+    }
+    .back-button {
+      background-color: #6c757d; /* Gris para botones de volver */
+      margin-top: 1.5rem;
+    }
+    .back-button:hover {
+      background-color: #5a6268;
     }
   </style>
 </head>
@@ -75,61 +127,74 @@
   </header>
 
   <main>
-    <!-- Registro de tendero -->
-    <section id="tendero-register" class="card">
-      <h2>Registrar Tendero</h2>
-      <input type="email" id="tenderoEmail" placeholder="Correo del tendero" />
-      <input type="password" id="tenderoPassword" placeholder="Contraseña" />
+    <!-- Selección de Rol Inicial -->
+    <section id="role-selection" class="card">
+      <h2>¿Quién eres?</h2>
+      <button id="btnSoyTendero">Soy Tendero</button>
+      <button id="btnSoyCliente">Soy Cliente</button>
+    </section>
+
+    <!-- Formularios de Tendero (Registro/Login) -->
+    <section id="tendero-forms" class="card hidden">
+      <h2>Panel de Tendero</h2>
+      <p id="tenderoFormStatus" class="status-message hidden"></p>
+
+      <h3>Registrarme</h3>
+      <input type="email" id="tenderoRegisterEmail" placeholder="Correo del tendero" />
+      <input type="password" id="tenderoRegisterPassword" placeholder="Contraseña (mínimo 6 caracteres)" />
       <button id="btnRegisterTendero">Registrar Tendero</button>
-      <p id="tenderoRegisterStatus" class="status-message hidden"></p>
+
+      <h3>Ya tengo cuenta</h3>
+      <input type="email" id="tenderoLoginEmail" placeholder="Correo del tendero" />
+      <input type="password" id="tenderoLoginPassword" placeholder="Contraseña" />
+      <button id="btnLoginTendero">Entrar como Tendero</button>
+      
+      <button id="btnBackToRolesFromTendero" class="back-button">Volver</button>
     </section>
 
-    <!-- Login de tendero -->
-    <section id="tendero-login" class="card">
-      <h2>Login Tendero</h2>
-      <input type="email" id="loginEmail" placeholder="Correo del tendero" />
-      <input type="password" id="loginPassword" placeholder="Contraseña" />
-      <button id="btnLoginTendero">Entrar</button>
-      <p id="tenderoLoginStatus" class="status-message hidden"></p>
-    </section>
-
-    <!-- Panel de tendero -->
+    <!-- Panel de Tendero (Después de login) -->
     <section id="panel-tendero" class="card hidden">
       <h2>Panel del Tendero</h2>
       <p>Bienvenido, <span id="tenderoDisplayName"></span>!</p>
 
       <h3>Registrar Nuevo Cliente</h3>
-      <input type="email" id="clienteEmail" placeholder="Correo del cliente (para login)" />
-      <input type="password" id="clientePassword" placeholder="Contraseña del cliente (para login)" />
+      <p>Para registrar un cliente y su cuenta, usaremos una **función en la nube segura**.</p>
+      <input type="email" id="clienteEmail" placeholder="Correo del cliente" />
+      <input type="password" id="clientePassword" placeholder="Contraseña del cliente (mínimo 6 caracteres)" />
       <input type="text" id="clienteApodo" placeholder="Apodo del cliente" />
-      <input type="number" id="clienteDeuda" placeholder="Monto de la deuda inicial" />
+      <input type="number" id="clienteDeuda" placeholder="Monto de la deuda inicial" min="0" />
       <button id="btnRegistrarCliente">Registrar Cliente</button>
       <p id="clienteRegisterStatus" class="status-message hidden"></p>
 
       <h3>Actualizar Deuda de Cliente</h3>
+      <p>Selecciona un cliente de tu lista o usa su email para actualizar su deuda.</p>
       <input type="email" id="updateClienteEmail" placeholder="Correo del cliente a actualizar" />
-      <input type="number" id="updateClienteDeuda" placeholder="Nuevo monto de deuda" />
+      <input type="number" id="updateClienteDeuda" placeholder="Nuevo monto de deuda" min="0" />
       <button id="btnActualizarDeuda">Actualizar Deuda</button>
       <p id="clienteUpdateStatus" class="status-message hidden"></p>
 
-      <button id="btnCerrarSesionTendero">Cerrar Sesión Tendero</button>
+      <button id="btnCerrarSesionTendero" class="back-button">Cerrar Sesión Tendero</button>
     </section>
 
-    <!-- Login de cliente -->
-    <section id="cliente-login" class="card">
-      <h2>Login Cliente</h2>
+    <!-- Formularios de Cliente (Login) -->
+    <section id="cliente-forms" class="card hidden">
+      <h2>Panel de Cliente</h2>
+      <p id="clienteFormStatus" class="status-message hidden"></p>
+      
+      <h3>Iniciar Sesión</h3>
       <input type="email" id="clienteLoginEmail" placeholder="Tu correo" />
       <input type="password" id="clienteLoginPassword" placeholder="Tu contraseña" />
       <button id="btnLoginCliente">Entrar como Cliente</button>
-      <p id="clienteLoginStatus" class="status-message hidden"></p>
+
+      <button id="btnBackToRolesFromCliente" class="back-button">Volver</button>
     </section>
 
-    <!-- Panel de cliente -->
+    <!-- Panel de Cliente (Después de login) -->
     <section id="panel-cliente" class="card hidden">
       <h2>Mi Deuda</h2>
       <p>Hola, <span id="clientePanelApodo"></span>!</p>
       <p>Tu deuda actual es: $<span id="clientePanelDeuda"></span></p>
-      <button id="btnCerrarSesionCliente">Cerrar Sesión Cliente</button>
+      <button id="btnCerrarSesionCliente" class="back-button">Cerrar Sesión Cliente</button>
     </section>
   </main>
 
@@ -139,7 +204,7 @@
       getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     import { 
-      getFirestore, doc, getDoc, setDoc, updateDoc
+      getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
     // Configuración Firebase - ¡Asegúrate que esta sea tu configuración real del proyecto!
@@ -167,19 +232,46 @@
 
     function hideStatus(elementId) {
       document.getElementById(elementId).classList.add("hidden");
+      document.getElementById(elementId).textContent = ""; // Limpiar texto
     }
+
+    function showSection(sectionId) {
+        document.querySelectorAll('main section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.getElementById(sectionId).classList.remove('hidden');
+    }
+
+    // --- Lógica de Navegación de UI ---
+    document.getElementById("btnSoyTendero").addEventListener("click", () => {
+        showSection("tendero-forms");
+        hideStatus("tenderoFormStatus"); // Limpiar estado al cambiar
+        document.getElementById("tenderoRegisterEmail").value = "";
+        document.getElementById("tenderoRegisterPassword").value = "";
+        document.getElementById("tenderoLoginEmail").value = "";
+        document.getElementById("tenderoLoginPassword").value = "";
+    });
+
+    document.getElementById("btnSoyCliente").addEventListener("click", () => {
+        showSection("cliente-forms");
+        hideStatus("clienteFormStatus"); // Limpiar estado al cambiar
+        document.getElementById("clienteLoginEmail").value = "";
+        document.getElementById("clienteLoginPassword").value = "";
+    });
+
+    document.getElementById("btnBackToRolesFromTendero").addEventListener("click", () => {
+        showSection("role-selection");
+    });
+
+    document.getElementById("btnBackToRolesFromCliente").addEventListener("click", () => {
+        showSection("role-selection");
+    });
+
 
     // --- Lógica de Autenticación y Firestore ---
 
     // Listener de estado de autenticación (para manejar la interfaz)
     onAuthStateChanged(auth, async (user) => {
-        // Ocultar todos los paneles inicialmente
-        document.getElementById("tendero-register").classList.add("hidden");
-        document.getElementById("tendero-login").classList.add("hidden");
-        document.getElementById("panel-tendero").classList.add("hidden");
-        document.getElementById("cliente-login").classList.add("hidden");
-        document.getElementById("panel-cliente").classList.add("hidden");
-
         if (user) {
             // Un usuario está logeado. Determinar si es tendero o cliente.
             const tenderoDocRef = doc(db, "tenderos", user.uid);
@@ -188,7 +280,7 @@
             if (tenderoDocSnap.exists()) {
                 // Es un tendero
                 document.getElementById("tenderoDisplayName").textContent = user.email;
-                document.getElementById("panel-tendero").classList.remove("hidden");
+                showSection("panel-tendero");
                 // Resetear campos del tendero
                 document.getElementById("clienteEmail").value = "";
                 document.getElementById("clientePassword").value = "";
@@ -206,67 +298,78 @@
                 if (clienteDocSnap.exists()) {
                     document.getElementById("clientePanelApodo").textContent = clienteDocSnap.data().apodo;
                     document.getElementById("clientePanelDeuda").textContent = clienteDocSnap.data().deuda;
-                    document.getElementById("panel-cliente").classList.remove("hidden");
+                    showSection("panel-cliente");
                 } else {
-                    // Usuario logeado pero no es tendero ni cliente en Firestore (ej. recién registrado por error)
+                    // Usuario logeado pero no es tendero ni cliente en Firestore
+                    // Esto puede pasar si un usuario se registra directamente con Authentication
+                    // pero no se le asigna un rol en Firestore.
+                    showStatus("tenderoFormStatus", "Tu cuenta no está asociada a ningún rol (tendero/cliente). Por favor, contacta al administrador.", true);
                     alert("Tu cuenta no está asociada a ningún rol (tendero/cliente). Por favor, contacta al administrador.");
-                    signOut(auth); // Cerrar sesión para evitar confusión
+                    signOut(auth); // Cerrar sesión para evitar confusión y que el usuario pueda intentar de nuevo
                 }
             }
         } else {
-            // Nadie está logeado, mostrar opciones de login/registro iniciales
-            document.getElementById("tendero-login").classList.remove("hidden");
-            document.getElementById("tendero-register").classList.remove("hidden");
-            document.getElementById("cliente-login").classList.remove("hidden");
-            // Limpiar estados
-            hideStatus("tenderoRegisterStatus");
-            hideStatus("tenderoLoginStatus");
-            hideStatus("clienteLoginStatus");
+            // Nadie está logeado, mostrar la selección de rol inicial
+            showSection("role-selection");
+            // Limpiar estados de login/registro
+            hideStatus("tenderoFormStatus");
+            hideStatus("clienteFormStatus");
         }
     });
 
 
     // --- Tendero: Registro ---
     document.getElementById("btnRegisterTendero").addEventListener("click", async () => {
-      const email = document.getElementById("tenderoEmail").value;
-      const password = document.getElementById("tenderoPassword").value;
-      hideStatus("tenderoRegisterStatus");
+      const email = document.getElementById("tenderoRegisterEmail").value;
+      const password = document.getElementById("tenderoRegisterPassword").value;
+      hideStatus("tenderoFormStatus");
+
+      if (!email || !password) {
+        showStatus("tenderoFormStatus", "Por favor, ingresa correo y contraseña.", true);
+        return;
+      }
 
       try {
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        // Las reglas de Firestore permiten al usuario autenticado escribir su propio documento en 'tenderos'
         await setDoc(doc(db, "tenderos", userCred.user.uid), {
           email: email,
           creado: new Date(),
         });
-        showStatus("tenderoRegisterStatus", "Tendero registrado correctamente ✅", false);
-        // No redirigir directamente, onAuthStateChanged manejará la UI
+        showStatus("tenderoFormStatus", "Tendero registrado correctamente ✅", false);
+        // onAuthStateChanged detectará el login y mostrará el panel del tendero
       } catch (error) {
-        showStatus("tenderoRegisterStatus", "Error registrando tendero: " + error.message, true);
+        showStatus("tenderoFormStatus", `Error registrando tendero: ${error.message}`, true);
       }
     });
 
     // --- Tendero: Login ---
     document.getElementById("btnLoginTendero").addEventListener("click", async () => {
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-      hideStatus("tenderoLoginStatus");
+      const email = document.getElementById("tenderoLoginEmail").value;
+      const password = document.getElementById("tenderoLoginPassword").value;
+      hideStatus("tenderoFormStatus");
+
+      if (!email || !password) {
+        showStatus("tenderoFormStatus", "Por favor, ingresa correo y contraseña.", true);
+        return;
+      }
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        showStatus("tenderoLoginStatus", "Login exitoso ✅", false);
-        // onAuthStateChanged manejará la UI
+        showStatus("tenderoFormStatus", "Login exitoso ✅", false);
+        // onAuthStateChanged detectará el login y mostrará el panel del tendero
       } catch (error) {
-        showStatus("tenderoLoginStatus", "Error en login: " + error.message, true);
+        showStatus("tenderoFormStatus", `Error en login: ${error.message}`, true);
       }
     });
 
     // --- Tendero: Cerrar Sesión ---
     document.getElementById("btnCerrarSesionTendero").addEventListener("click", async () => {
       await signOut(auth);
-      // onAuthStateChanged manejará la UI
+      // onAuthStateChanged manejará la UI volviendo a la selección de rol
     });
 
-    // --- Tendero: Registrar Cliente ---
+    // --- Tendero: Registrar Cliente (¡Aquí la SOLUCIÓN CLOUD FUNCTIONS!) ---
     document.getElementById("btnRegistrarCliente").addEventListener("click", async () => {
       const clienteEmail = document.getElementById("clienteEmail").value.trim();
       const clientePassword = document.getElementById("clientePassword").value.trim();
@@ -284,42 +387,35 @@
         return;
       }
 
-      try {
-        // 1. Crear cuenta de autenticación para el cliente
-        const clienteAuth = getAuth(app); // Usar una instancia de auth separada si no se quiere que el tendero se desloguee
-                                        // Ojo: createUserWithEmailAndPassword loguea al nuevo usuario, luego el tendero se deslogueará.
-                                        // Mejor manejar con Cloud Functions o solo crear la cuenta sin loguear.
-                                        // Para este ejemplo, simplificamos y el tendero se "desloguea" brevemente al crear al cliente.
+      // --- PASO CLAVE: LLAMADA A CLOUD FUNCTION ---
+      // Aquí harías una llamada a tu Cloud Function para crear el cliente
+      // Ejemplo (necesitas desplegar esta función en Firebase):
+      // const createClientFn = httpsCallable(functions, 'createClientByTendero');
+      // try {
+      //   const result = await createClientFn({
+      //     email: clienteEmail,
+      //     password: clientePassword,
+      //     apodo: clienteApodo,
+      //     deuda: clienteDeuda
+      //   });
+      //   showStatus("clienteRegisterStatus", `Cliente '${clienteApodo}' registrado correctamente ✅`, false);
+      //   // Limpiar campos
+      //   document.getElementById("clienteEmail").value = "";
+      //   document.getElementById("clientePassword").value = "";
+      //   document.getElementById("clienteApodo").value = "";
+      //   document.getElementById("clienteDeuda").value = "";
+      // } catch (error) {
+      //   showStatus("clienteRegisterStatus", "Error registrando cliente (Cloud Function): " + error.message, true);
+      // }
 
-        // Crea el usuario en Firebase Auth
-        const clientUserCred = await createUserWithEmailAndPassword(clienteAuth, clienteEmail, clientePassword);
-        const newClientUid = clientUserCred.user.uid;
-
-        // 2. Guardar datos del cliente en Firestore
-        await setDoc(doc(db, "clientes", newClientUid), {
-          apodo: clienteApodo,
-          email: clienteEmail, // Guardar el email para referencia del tendero si es necesario
-          deuda: clienteDeuda,
-          tenderoUid: tendero.uid, // Vincular el cliente al tendero que lo registró
-          fechaRegistro: new Date(),
-        });
-
-        // 3. Volver a loguear al tendero (si createUserWithEmailAndPassword lo deslogueó)
-        // Esto es un workaround. Lo ideal es no desloguear al tendero al crear un cliente.
-        // Una Cloud Function que cree el usuario de forma administrativa sería la mejor solución.
-        // Por la simplicidad del navegador, haremos que el tendero se loguee de nuevo si fue deslogueado.
-        await signInWithEmailAndPassword(auth, tendero.email, "TU_PASSWORD_TENDERO"); // <<-- ¡Ojo aquí! Necesitas la contraseña del tendero
-
-        showStatus("clienteRegisterStatus", `Cliente '${clienteApodo}' registrado correctamente ✅`, false);
-        // Limpiar campos después del registro
-        document.getElementById("clienteEmail").value = "";
-        document.getElementById("clientePassword").value = "";
-        document.getElementById("clienteApodo").value = "";
-        document.getElementById("clienteDeuda").value = "";
-      } catch (error) {
-        // Si hay un error al crear el usuario en Auth (ej. email ya existe), borrar el documento si se creó antes.
-        showStatus("clienteRegisterStatus", "Error registrando cliente: " + error.message, true);
-      }
+      // --- MIENTRAS TANTO, SOLO PARA DEMOSTRACIÓN (NO USAR EN PRODUCCIÓN) ---
+      // Simula el éxito, o podrías usar una alerta de que la función debe ser implementada.
+      alert("¡Importante! La funcionalidad de 'Registrar Cliente' debe implementarse con una Cloud Function segura para evitar problemas de autenticación y seguridad.");
+      showStatus("clienteRegisterStatus", `Simulación: Cliente '${clienteApodo}' registrado correctamente. (Requiere Cloud Function)`, false);
+      document.getElementById("clienteEmail").value = "";
+      document.getElementById("clientePassword").value = "";
+      document.getElementById("clienteApodo").value = "";
+      document.getElementById("clienteDeuda").value = "";
     });
 
     // --- Tendero: Actualizar Deuda de Cliente ---
@@ -339,21 +435,13 @@
       }
 
       try {
-        // Buscar el UID del cliente por su email (esto requeriría una Cloud Function para ser seguro)
-        // Ojo: Buscar el UID de un usuario de Auth por su email NO es posible desde el cliente directamente por seguridad.
-        // La mejor manera sería que el tendero consulte sus propios clientes y elija de una lista.
-        // Para simplificar aquí, ASUMIMOS que el tendero sabe el email del cliente y que el email es único y no hay riesgo.
-        // ¡En un entorno real, necesitarías una forma más robusta de vincular email a UID para actualización!
-
-        // *************** SOLUCIÓN TEMPORAL E INSEGURA EN EL CLIENTE *******************
-        // Esto NO se debe hacer en producción. Para buscar un UID por email, necesitas una Cloud Function
-        // o que el tendero gestione a sus clientes desde una lista pre-cargada.
-        // La única forma en el cliente sería si la búsqueda se hiciera por un campo indexado en Firestore
-        // (ej. si guardaste el email del cliente en su documento de Firestore).
-        // Si ya tienes el `email` en el documento `clientes`, puedes hacer una query así:
-
+        // La consulta busca el cliente que coincide con el email Y que pertenece a este tendero.
+        // Esto es seguro gracias a tus reglas de Firestore.
         const clientesCollectionRef = collection(db, "clientes");
-        const q = query(clientesCollectionRef, where("email", "==", updateClienteEmail), where("tenderoUid", "==", tenderoUid));
+        const q = query(clientesCollectionRef, 
+                        where("email", "==", updateClienteEmail), 
+                        where("tenderoUid", "==", tenderoUid)
+                       ); // Filtra por el tendero actual
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -361,7 +449,7 @@
           return;
         }
 
-        const clienteDoc = querySnapshot.docs[0];
+        const clienteDoc = querySnapshot.docs[0]; // Asume que el email es único por tendero
         await updateDoc(doc(db, "clientes", clienteDoc.id), {
           deuda: newDeuda,
           fechaActualizacion: new Date(),
@@ -372,7 +460,7 @@
         document.getElementById("updateClienteDeuda").value = "";
 
       } catch (error) {
-        showStatus("clienteUpdateStatus", "Error actualizando deuda: " + error.message, true);
+        showStatus("clienteUpdateStatus", `Error actualizando deuda: ${error.message}`, true);
       }
     });
 
@@ -381,21 +469,26 @@
     document.getElementById("btnLoginCliente").addEventListener("click", async () => {
       const email = document.getElementById("clienteLoginEmail").value;
       const password = document.getElementById("clienteLoginPassword").value;
-      hideStatus("clienteLoginStatus");
+      hideStatus("clienteFormStatus");
+
+      if (!email || !password) {
+        showStatus("clienteFormStatus", "Por favor, ingresa correo y contraseña.", true);
+        return;
+      }
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        showStatus("clienteLoginStatus", "Login de cliente exitoso ✅", false);
-        // onAuthStateChanged manejará la UI
+        showStatus("clienteFormStatus", "Login de cliente exitoso ✅", false);
+        // onAuthStateChanged detectará el login y mostrará el panel del cliente
       } catch (error) {
-        showStatus("clienteLoginStatus", "Error en login de cliente: " + error.message, true);
+        showStatus("clienteFormStatus", `Error en login de cliente: ${error.message}`, true);
       }
     });
 
     // --- Cliente: Cerrar Sesión ---
     document.getElementById("btnCerrarSesionCliente").addEventListener("click", async () => {
       await signOut(auth);
-      // onAuthStateChanged manejará la UI
+      // onAuthStateChanged manejará la UI volviendo a la selección de rol
     });
 
   </script>
